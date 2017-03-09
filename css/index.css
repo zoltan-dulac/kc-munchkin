@@ -59,7 +59,7 @@ td > * {
 	image-rendering: -moz-crisp-edges;
 	image-rendering: pixelated;
 	
-	transform: translateZ(0);
+	transform: translate3d(0, 0, 0);
 	transition: transform linear 250ms;
 }
 
@@ -88,6 +88,24 @@ td > *:after {
 	background-repeat: no-repeat;
 }
 
+/* Moving */
+td > .w {
+	transform: translate3d(calc(-120vmin / 9), 0, 0);
+}
+
+
+td > .e {
+	transform: translate3d(calc(120vmin / 9), 0, 0);
+}
+
+td > .n {
+	transform: translate3d(0, calc(-120vmin / 9), 0);
+}
+
+td > .s {
+	transform: translate3d(0, calc(120vmin / 9), 0);
+}
+
 .dot {
 }
 
@@ -101,7 +119,7 @@ td > *:after {
 }
 
 .muncher:before {
-	background-image: url('../images/eyes-left.gif');
+	
 }
 
 .muncher:after {
@@ -126,7 +144,12 @@ td > *:after {
  * EYES
  */
 
+.muncher.w:before {
+	background-image: url('../images/eyes-left.gif');
+}
+
 .muncher.e:before {
+	background-image: url('../images/eyes-left.gif');
 	transform: scaleX(-1);
 }
 
@@ -141,9 +164,7 @@ td > *:after {
 }
 
 .kc:after {
-	
 	background-image: url('../images/kc-still.gif');
-	
 }
 
 
@@ -153,32 +174,17 @@ td > *:after {
 	animation: kc-move 250ms steps(4) infinite;
 }
 
-.kc.left {
-	transform: translateX(calc(-120vmin / 9));
-}
 
 
-.kc.right {
-	transform: translateX(calc(120vmin / 9));
-}
-
-.kc.up {
-	transform: translateY(calc(-120vmin / 9));
-}
-
-.kc.down {
-	transform: translateY(calc(120vmin / 9));
-}
-
-.kc.right:after {
+.kc.e:after {
 	transform: scaleX(-1);
 }
 
-.kc.up:after {
+.kc.n:after {
 	transform: rotate(90deg);
 }
 
-.kc.down:after {
+.kc.s:after {
 	transform: scaleX(-1) rotate(-90deg);
 }
 

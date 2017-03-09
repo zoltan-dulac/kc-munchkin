@@ -54,19 +54,35 @@ var maze = new function () {
 		}
 	}
 	
-	function getCellInDir(x, y, dir) {
+	me.getCellInDir = function(x, y, dir) {
 		switch(dir) {
 			case "n":
-				return me.getCell(x, y - 1);
+				return {
+					cell: me.getCell(x, y - 1),
+					x: x,
+					y: y - 1
+				};
 				
 			case "s": 
-				return me.getCell(x, y + 1);
+				return {
+					cell: me.getCell(x, y + 1),
+					x: x,
+					y: y + 1
+				};
 				
 			case "w": 
-				return me.getCell(x-1, y);
+				return {
+					cell: me.getCell(x-1, y),
+					x: x - 1,
+					y: y
+				};
 				
 			case "e":
-				return me.getCell(x + 1, y);
+				return {
+					cell: me.getCell(x + 1, y),
+					x: x + 1,
+					y: y
+				};
 				
 		}
 		return null;
@@ -76,19 +92,6 @@ var maze = new function () {
 		me.getCell(x,y).appendChild(el);
 	}
 	
-	function oppositeDir(dir) {
-		switch(dir) {
-			case 'n':
-				return 's';
-			case 's':
-				return 'n';
-			case 'w':
-				return 'e';
-			case 'e':
-				return 'w';
-		}
-		return null;
-	}
 	
 	function removeRandomWall(x, y, cell) {
 		var bannedDirs = [],
@@ -135,13 +138,13 @@ var maze = new function () {
 	
 	me.setWall = function (x, y, dir, operation) {
 		var cell = me.getCell(x, y),
-			cellInDir = getCellInDir(x, y, dir),
+			cellInDir = me.getCellInDir(x, y, dir).cell,
 			classListOp = (operation === 'add' ? 'remove' : 'add');
 		
 		cell.classList[classListOp](dir);
 		
 		if (cellInDir) {
-			cellInDir.classList[classListOp](oppositeDir(dir));
+			cellInDir.classList[classListOp](game.oppositeDir(dir));
 		}
 	}
 	 
@@ -250,19 +253,19 @@ var KC = function(x, y) {
 		
 		switch (e.key) {
 			case "ArrowDown":
-				el.className = 'kc move down';
+				el.className = 'kc move s';
 				e.preventDefault();
 				break;
 			case "ArrowUp":
-				el.className = 'kc move up';
+				el.className = 'kc move n';
 				e.preventDefault();
 				break;
 			case "ArrowLeft":
-				el.className = 'kc move left';
+				el.className = 'kc move w';
 				e.preventDefault();
 				break;
 			case "ArrowRight":
-				el.className = 'kc move right';
+				el.className = 'kc move e';
 				e.preventDefault();
 				break;
 		}
@@ -319,20 +322,58 @@ var MuncherDen = function (x, y) {
 }
 
 
-var Muncher = function (x, y, dir, index) {
+var Muncher = function (x, y, dir, speed, index) {
 	var me = this,
 		dirs = ['n', 'e', 's', 'w'],
 		openDir = dirs[0],
-		el = maze.getCell(x, y);
+		el,
+		cellEl = maze.getCell(x, y);
 	
 	me.x = x;
 	me.y = y;
 	me.dir = dir;
+	me.speed = speed;
+	
+	function transitionEndHandler(e) {
+		var cellInfo = maze.getCellInDir(me.x, me.y, me.dir);
+		cellEl = cellInfo.cell;
+		me.x = cellInfo.x;
+		me.y = cellInfo.y;
+		maze.putInCell(el, cellInfo.x, cellInfo.y);
+		el.className = 'muncher muncher-'+ index;
+		setTimeout(go, 1);
+		
+	}
+	
+	function go() {
+		var currentDir = me.dir,
+			possibleDirs = cellEl.classList
+			numPossibleDirs = possibleDirs.length,
+			nextDirIndex = game.randInt(0, numPossibleDirs - 1),
+			nextDir = possibleDirs[nextDirIndex];
+			
+		if (numPossibleDirs > 1) {
+			if (nextDir === game.oppositeDir(currentDir)) {
+				nextDirIndex = (nextDirIndex + 1) % numPossibleDirs;
+				nextDir = possibleDirs[nextDirIndex];
+			}
+		}
+		
+		me.dir = nextDir;
+		
+		el.classList.add(me.dir);
+	}
 	
 	function init() {
 		el = ce('div');
-		el.className = 'muncher muncher-'+ index + ' ' + dir;
+		
+		el.addEventListener('transitionend', transitionEndHandler);
+		el.className = 'muncher muncher-'+ index;
+		
+		el.style.transitionDuration = me.speed + 'ms';
 		maze.putInCell(el, x, y);
+		setTimeout(go, 1);
+		
 	}
 	
 	init();
@@ -345,6 +386,24 @@ var game = new function () {
 		kc,
 		den;
 		
+	me.randInt = function (min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+	}
+	
+	me.oppositeDir = function(dir) {
+		switch(dir) {
+			case 'n':
+				return 's';
+			case 's':
+				return 'n';
+			case 'w':
+				return 'e';
+			case 'e':
+				return 'w';
+		}
+		return null;
+	}
+	
 	function createDots() {
 		var i = 0;
 		
@@ -370,7 +429,7 @@ var game = new function () {
 		var i;
 		
 		for (i=0; i<munchers.length; i++) {
-			munchers[i] = new Muncher(5 + i, 5, 'n', i);
+			munchers[i] = new Muncher(5 , 5, 'n', 250 + 100 * i, i);
 		}
 		
 	}
