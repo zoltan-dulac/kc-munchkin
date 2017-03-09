@@ -1,0 +1,193 @@
+body {
+	background: black;
+	color: white;
+	margin: 0;
+	overflow: hidden;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+table {
+	xborder-collapse: collapse;
+	width: calc(96vmin * 9 / 7);
+	height: 96vmin;
+}
+
+th {
+	width: 0px;
+	display: none;
+}
+td {
+	border: 0.5vmin solid blue;
+	width: 10.6666vmin; /* 96vmin / 9); */
+	height: calc(96vmin / 7);
+	text-align: center;
+	vertical-align: middle;
+	white-space: nowrap;
+	position: relative;
+}
+td.s {
+	border-bottom: none;
+}
+td.n {
+	border-top: none;
+}
+td.w {
+	border-left: none;
+}
+td.e {
+	border-right: none;
+}
+td.v {
+	background: skyblue
+}
+
+/*
+ * moving objects
+ */
+
+td > * {
+	width: calc(96vmin / 9 );
+	height: calc(96vmin / 9 );
+	position: absolute;
+	top: 1vmin;
+	left: 1vmin;
+	display: inline-block;
+
+	image-rendering: -moz-crisp-edges;
+	image-rendering: pixelated;
+	
+	transform: translateZ(0);
+	transition: transform linear 250ms;
+}
+
+td > *:before {
+	content: "";
+	position: absolute;
+	left: 0;
+	top: 0;
+	z-index: 2;
+	width: 100%;
+	height: 100%;
+	background-size: calc(96vmin / 9 ) auto;
+	background-position-y: calc(96vmin / 9 * 4 / 16);
+	background-repeat: no-repeat;
+}
+
+td > *:after {
+	content: "";
+	position: absolute;
+	left: 0;
+	top: 0;
+	z-index: 1;
+	width: 100%;
+	height: 100%;
+	background-size: calc(96vmin / 9 ) calc(96vmin / 9 );
+	background-repeat: no-repeat;
+}
+
+.dot {
+}
+
+.dot:after {
+	
+	background-image: url('../images/dot.gif');
+}
+
+.kc {
+	
+}
+
+.muncher:before {
+	background-image: url('../images/eyes-left.gif');
+}
+
+.muncher:after {
+	background-image: url('../images/muncher-left.gif');
+	background-size: auto calc(96vmin / 9 );
+	animation: muncher-move 250ms steps(2) infinite;
+}
+
+.muncher-1:after {
+	filter: hue-rotate(160deg);
+}
+
+.muncher-2:after {
+	filter: hue-rotate(260deg);
+}
+
+.muncher.e:after {
+	transform: scaleX(-1);
+}
+
+/*
+ * EYES
+ */
+
+.muncher.e:before {
+	transform: scaleX(-1);
+}
+
+.muncher.n:before {
+	background-image: url('../images/eyes-down.gif');
+	transform: scaleY(-1);
+	background-position-y: calc(96vmin / 9 * 8 / 16);
+}
+
+.muncher.s:before {
+	background-image: url('../images/eyes-down.gif');
+}
+
+.kc:after {
+	
+	background-image: url('../images/kc-still.gif');
+	
+}
+
+
+.kc.move:after {
+	background-image: url('../images/kc-left.gif');
+	background-size: auto calc(96vmin / 9 );
+	animation: kc-move 250ms steps(4) infinite;
+}
+
+.kc.left {
+	transform: translateX(calc(-120vmin / 9));
+}
+
+
+.kc.right {
+	transform: translateX(calc(120vmin / 9));
+}
+
+.kc.up {
+	transform: translateY(calc(-120vmin / 9));
+}
+
+.kc.down {
+	transform: translateY(calc(120vmin / 9));
+}
+
+.kc.right:after {
+	transform: scaleX(-1);
+}
+
+.kc.up:after {
+	transform: rotate(90deg);
+}
+
+.kc.down:after {
+	transform: scaleX(-1) rotate(-90deg);
+}
+
+
+@keyframes kc-move {
+  100% { background-position: calc(-96vmin / 9 * 4) }
+}
+
+@keyframes muncher-move {
+  100% { background-position: calc(-96vmin / 9 * 2) }
+}
+
