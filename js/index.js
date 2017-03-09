@@ -275,9 +275,40 @@ var KC = function(x, y) {
 				break;
 		}
 	}	
+	
+	me.die = function () {
+		el.addEventListener('transitionend', me.reincarnate);
+		el.classList.remove('n', 's', 'e', 'w');
+		el.classList.add('die');
+	}
+	
+	me.reincarnate = function () {
+		el.removeEventListener('transitionend', me.reincarnate);
+		el.classList.remove('die');
+		el.classList.add('dead');
+		
+	}
+	
 	function stop(e) {
 		e.preventDefault();
 		el.className='kc'
+	}
+	
+	function detectDeath() {
+		var box = el.getBoundingClientRect(),
+			w = box.right - box.left,
+			h = box.bottom - box.top,
+			midX = box.left + w/2,
+			midY = box.top + h/2,
+			objOnTop = document.elementFromPoint(midX, midY);
+			
+			if (objOnTop !== el) {
+				console.log(midX, midY, w, h, objOnTop)
+				//game.stopPlayers();
+				me.die();
+			} else {
+				setTimeout(detectDeath, 100);
+			}
 	}
 	
 	
@@ -288,6 +319,8 @@ var KC = function(x, y) {
 		
 		document.addEventListener('keydown', move);
 		document.addEventListener('keyup', stop);
+		
+		detectDeath();
 	}
 	
 	init();
@@ -369,6 +402,10 @@ var Muncher = function (x, y, dir, speed, index) {
 		el.classList.add(me.dir);
 	}
 	
+	me.stop = function() {
+		el.classList.add('stop');
+	}
+	
 	function init() {
 		el = ce('div');
 		
@@ -437,6 +474,12 @@ var game = new function () {
 			munchers[i] = new Muncher(5 , 5, 'n', 250 + 100 * i, i);
 		}
 		
+	}
+	
+	me.stopPlayers = function () {
+		for (i=0; i<munchers.length; i++) {
+			munchers[i].stop();
+		}
 	}
 	
 	me.start = function () {

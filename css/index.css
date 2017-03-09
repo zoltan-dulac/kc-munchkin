@@ -79,6 +79,7 @@ td > *:before {
 td > *:after {
 	content: "";
 	position: absolute;
+	z-index: 0;
 	left: 0;
 	top: 0;
 	z-index: 1;
@@ -107,15 +108,24 @@ td > .s {
 }
 
 .dot {
+	z-index: 10;
+}
+
+.kc {
+	z-index: 20;
+}
+
+.stop {
+	display: none;
+}
+
+.muncher {
+	z-index: 30;
 }
 
 .dot:after {
 	
 	background-image: url('../images/dot.gif');
-}
-
-.kc {
-	
 }
 
 .muncher:before {
@@ -175,6 +185,15 @@ td > .s {
 }
 
 
+.kc.die:after {
+	background-image: url('../images/kc-dying.gif');
+	background-size: auto calc(96vmin / 9 );
+	animation: kc-die 500ms steps(8);
+}
+
+.kc.dead:after {
+	visibility: hidden;
+}
 
 .kc.e:after {
 	transform: scaleX(-1);
@@ -189,6 +208,10 @@ td > .s {
 }
 
 
+@keyframes kc-die {
+  100% { background-position: calc(-96vmin / 9 * 8) }
+}
+
 @keyframes kc-move {
   100% { background-position: calc(-96vmin / 9 * 4) }
 }
@@ -196,4 +219,3 @@ td > .s {
 @keyframes muncher-move {
   100% { background-position: calc(-96vmin / 9 * 2) }
 }
-
