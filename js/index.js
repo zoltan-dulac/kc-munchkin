@@ -1,3 +1,8 @@
+/*
+ * Graphics from: http://atariage.com/forums/topic/220324-kc-munchkin/page-3
+ */
+
+
 Node.prototype.add = function(tag, cnt, txt) {
 	for (var i = 0; i < cnt; i++)
 		this.appendChild(ce(tag, txt));
