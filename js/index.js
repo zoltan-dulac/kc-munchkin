@@ -229,35 +229,42 @@ var maze = new function () {
 	}
 };
 
+/*******************
+ * DOT
+ *******************/
 var Dot = function(x, y) {
 	var
 		me = this,
-		el,
-		cellEl = maze.getCell(x, y);;
+		cellEl = maze.getCell(x, y);
 	
 	me.x = x;
 	me.y = y;
+	me.el = null;
 	
 	function transitionEndHandler(e) {
 		var cellInfo = maze.getCellInDir(me.x, me.y, me.dir);
 		cellEl = cellInfo.cell;
 		me.x = cellInfo.x;
 		me.y = cellInfo.y;
-		maze.putInCell(el, cellInfo.x, cellInfo.y);
-		el.classList.remove('n', 's', 'e', 'w');
+		maze.putInCell(me.el, cellInfo.x, cellInfo.y);
+		me.el.classList.remove('n', 's', 'e', 'w');
 		setTimeout(go, 1);
 	}
 	
 	function go() {
-		me.dir = game.setPlayerDir(el, cellEl, me.dir);
+		me.dir = game.setPlayerDir(me.el, cellEl, me.dir);
 	}
 	
 	function init() {
-		el = ce('div');
-		el.className = 'dot';
-		maze.putInCell(el, x, y);
-		el.addEventListener('transitionend', transitionEndHandler);
+		me.el = ce('div');
+		me.el.className = 'dot';
+		maze.putInCell(me.el, x, y);
+		me.el.addEventListener('transitionend', transitionEndHandler);
 		setTimeout(go, 1);
+	}
+	
+	me.stop = function() {
+		me.el.classList.add('stop');
 	}
 	
 	init();
@@ -265,79 +272,65 @@ var Dot = function(x, y) {
 
 var KC = function(x, y) {
 	var 
-		me = this,
-		el;
+		me = this;
 	
 	me.x = x;
 	me.y = y;
+	me.el = null;
 
 	function move(e) {
 		
 		switch (e.key) {
 			case "ArrowDown":
-				el.className = 'kc move s';
+				me.el.className = 'kc move s';
 				e.preventDefault();
 				break;
 			case "ArrowUp":
-				el.className = 'kc move n';
+				me.el.className = 'kc move n';
 				e.preventDefault();
 				break;
 			case "ArrowLeft":
-				el.className = 'kc move w';
+				me.el.className = 'kc move w';
 				e.preventDefault();
 				break;
 			case "ArrowRight":
-				el.className = 'kc move e';
+				me.el.className = 'kc move e';
 				e.preventDefault();
 				break;
 		}
 	}	
 	
 	me.die = function () {
-		el.addEventListener('transitionend', me.reincarnate);
-		el.classList.remove('n', 's', 'e', 'w');
-		el.classList.add('die');
+		me.el.addEventListener('animationend', me.reincarnate);
+		me.el.classList.remove('n', 's', 'e', 'w');
+		me.el.classList.add('die');
+		game.stopPlayers();
 	}
 	
 	me.reincarnate = function () {
-		el.removeEventListener('transitionend', me.reincarnate);
-		el.classList.remove('die');
-		el.classList.add('dead');
+		console.log('xxx')
+		me.el.removeEventListener('animationend', me.reincarnate);
+		me.el.classList.remove('die');
+		me.el.classList.add('dead');
 		
+		setTimeout(game.start, 1);
 	}
 	
 	function stop(e) {
 		e.preventDefault();
-		el.className='kc'
+		me.el.className='kc'
 	}
 	
-	function detectDeath() {
-		var box = el.getBoundingClientRect(),
-			w = box.right - box.left,
-			h = box.bottom - box.top,
-			midX = box.left + w/2,
-			midY = box.top + h/2,
-			objOnTop = document.elementFromPoint(midX, midY);
-			
-			if (objOnTop !== el) {
-				console.log(midX, midY, w, h, objOnTop)
-				//game.stopPlayers();
-				me.die();
-			} else {
-				setTimeout(detectDeath, 100);
-			}
-	}
 	
 	
 	function init() {
-		el = ce('div');
-		el.className = 'kc';
-		maze.putInCell(el, x, y);
+		me.el = ce('div');
+		me.el.className = 'kc';
+		maze.putInCell(me.el, x, y);
 		
 		document.addEventListener('keydown', move);
 		document.addEventListener('keyup', stop);
 		
-		detectDeath();
 	}
 	
 	init();
@@ -346,8 +339,9 @@ var KC = function(x, y) {
 var MuncherDen = function (x, y) {
 	var me = this,
 		dirs = ['n', 'e', 's', 'w'],
-		openDir = dirs[0],
-		el = maze.getCell(x, y);
+		openDir = dirs[0];
+		
+	me.el = maze.getCell(x, y);
 	
 	me.x = x;
 	me.y = y;
@@ -369,7 +363,7 @@ var MuncherDen = function (x, y) {
 	}
 	
 	function init() {
-		el = maze.getCell(x,y);
+		me.el = maze.getCell(x,y);
 		render();
 	}
 	
@@ -394,27 +388,27 @@ var Muncher = function (x, y, dir, speed, index) {
 		cellEl = cellInfo.cell;
 		me.x = cellInfo.x;
 		me.y = cellInfo.y;
-		maze.putInCell(el, cellInfo.x, cellInfo.y);
-		el.classList.remove('n', 's', 'e', 'w');
+		maze.putInCell(me.el, cellInfo.x, cellInfo.y);
+		me.el.classList.remove('n', 's', 'e', 'w');
 		setTimeout(go, 1);
 	}
 	
 	function go() {
-		me.dir = game.setPlayerDir(el, cellEl, me.dir);
+		me.dir = game.setPlayerDir(me.el, cellEl, me.dir);
 	}
 	
 	me.stop = function() {
-		el.classList.add('stop');
+		me.el.classList.add('stop');
 	}
 	
 	function init() {
-		el = ce('div');
+		me.el = ce('div');
 		
-		el.addEventListener('transitionend', transitionEndHandler);
-		el.className = 'muncher muncher-'+ index;
+		me.el.addEventListener('transitionend', transitionEndHandler);
+		me.el.className = 'muncher muncher-'+ index;
 		
-		el.style.transitionDuration = me.speed + 'ms';
-		maze.putInCell(el, x, y);
+		me.el.style.transitionDuration = me.speed + 'ms';
+		maze.putInCell(me.el, x, y);
 		setTimeout(go, 1);
 		
 	}
@@ -431,6 +425,12 @@ var game = new function () {
 		
 	me.randInt = function (min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
+	}
+	
+	me.reset = function () {
+		dots = new Array(6);
+		munchers = new Array(3);
+		den = null;
 	}
 	
 	me.oppositeDir = function(dir) {
@@ -478,8 +478,13 @@ var game = new function () {
 	}
 	
 	me.stopPlayers = function () {
+		var i;
 		for (i=0; i<munchers.length; i++) {
 			munchers[i].stop();
+		}
+		
+		for (i=0; i<dots.length; i++) {
+			dots[i].stop();
 		}
 	}
 	
@@ -504,13 +509,57 @@ var game = new function () {
 		return dir;
 	}
 	
+	function whatIsOnTopOf(obj) {
+		var box = obj.el.getBoundingClientRect(),
+			w = box.right - box.left,
+			h = box.bottom - box.top,
+			midX = box.left + w/2,
+			midY = box.top + h/2,
+			objOnTop = document.elementFromPoint(midX, midY);
+		return objOnTop;
+	}
+	
+	function removeItemFromArray(item, array) {
+		var index = array.indexOf(item);
+		if (index > -1) {
+			return array.splice(index, 1);
+		} else {
+			return array;
+		}
+	}
+	
+	function detectCollisions() {
+			var
+				objOnTop = whatIsOnTopOf(kc),
+				i;
+				
+			if (objOnTop !== kc.el) {
+				//game.stopPlayers();
+				kc.die();
+			} else {
+				setTimeout(detectCollisions, 100);
+			}
+			
+			for (i=0; i<dots.length; i++) {
+				var dot = dots[i];
+				objOnTop = whatIsOnTopOf(dot);
+				
+				if (objOnTop === kc.el) {
+					console.log('ontop');
+					dot.stop();
+					dots = dots.splice(i, 1);
+				}
+			}
+	}
+	
 	me.start = function () {
 		maze.make(9, 7);
-		
 		createDots();
 		createKC();
 		createDen();
 		createMunchers();
+		
+		detectCollisions();
 	}
 };
 

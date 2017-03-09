@@ -189,7 +189,7 @@ td > .s {
 .kc.die:after {
 	background-image: url('../images/kc-dying.gif');
 	background-size: auto calc(96vmin / 9 );
-	animation: kc-die 500ms steps(8);
+	animation: kc-die 1000ms steps(8);
 }
 
 .kc.dead:after {
