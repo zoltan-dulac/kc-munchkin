@@ -109,6 +109,7 @@ td > .s {
 
 .dot {
 	z-index: 10;
+	transition: transform linear 1000ms;
 }
 
 .kc {

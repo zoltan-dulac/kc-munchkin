@@ -232,15 +232,32 @@ var maze = new function () {
 var Dot = function(x, y) {
 	var
 		me = this,
-		el;
+		el,
+		cellEl = maze.getCell(x, y);;
 	
 	me.x = x;
 	me.y = y;
+	
+	function transitionEndHandler(e) {
+		var cellInfo = maze.getCellInDir(me.x, me.y, me.dir);
+		cellEl = cellInfo.cell;
+		me.x = cellInfo.x;
+		me.y = cellInfo.y;
+		maze.putInCell(el, cellInfo.x, cellInfo.y);
+		el.classList.remove('n', 's', 'e', 'w');
+		setTimeout(go, 1);
+	}
+	
+	function go() {
+		me.dir = game.setPlayerDir(el, cellEl, me.dir);
+	}
 	
 	function init() {
 		el = ce('div');
 		el.className = 'dot';
 		maze.putInCell(el, x, y);
+		el.addEventListener('transitionend', transitionEndHandler);
+		setTimeout(go, 1);
 	}
 	
 	init();
@@ -378,28 +395,12 @@ var Muncher = function (x, y, dir, speed, index) {
 		me.x = cellInfo.x;
 		me.y = cellInfo.y;
 		maze.putInCell(el, cellInfo.x, cellInfo.y);
-		el.className = 'muncher muncher-'+ index;
+		el.classList.remove('n', 's', 'e', 'w');
 		setTimeout(go, 1);
-		
 	}
 	
 	function go() {
-		var currentDir = me.dir,
-			possibleDirs = cellEl.classList
-			numPossibleDirs = possibleDirs.length,
-			nextDirIndex = game.randInt(0, numPossibleDirs - 1),
-			nextDir = possibleDirs[nextDirIndex];
-			
-		if (numPossibleDirs > 1) {
-			if (nextDir === game.oppositeDir(currentDir)) {
-				nextDirIndex = (nextDirIndex + 1) % numPossibleDirs;
-				nextDir = possibleDirs[nextDirIndex];
-			}
-		}
-		
-		me.dir = nextDir;
-		
-		el.classList.add(me.dir);
+		me.dir = game.setPlayerDir(el, cellEl, me.dir);
 	}
 	
 	me.stop = function() {
@@ -480,6 +481,27 @@ var game = new function () {
 		for (i=0; i<munchers.length; i++) {
 			munchers[i].stop();
 		}
+	}
+	
+	me.setPlayerDir = function (el, cellEl, currentDir) {
+		var
+			dir,
+			possibleDirs = cellEl.classList
+			numPossibleDirs = possibleDirs.length,
+			nextDirIndex = game.randInt(0, numPossibleDirs - 1),
+			nextDir = possibleDirs[nextDirIndex];
+			
+		if (numPossibleDirs > 1) {
+			if (nextDir === game.oppositeDir(currentDir)) {
+				nextDirIndex = (nextDirIndex + 1) % numPossibleDirs;
+				nextDir = possibleDirs[nextDirIndex];
+			}
+		}
+		
+		dir = nextDir;
+		
+		el.classList.add(dir);
+		return dir;
 	}
 	
 	me.start = function () {
