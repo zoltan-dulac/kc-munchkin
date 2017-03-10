@@ -1,12 +1,23 @@
+@import "../fonts/PressStart2P/stylesheet.css";
+
 body {
 	background: black;
 	color: white;
 	margin: 0;
 	overflow: hidden;
+	font-family: "PressStart2P", "Courier New", "Courier";
+	text-transform: uppercase;
 }
 
 * {
 	box-sizing: border-box;
+}
+
+.stats {
+	position: absolute;
+	right: 0;
+	top: 0;
+	padding: 1em;
 }
 
 table {
@@ -61,6 +72,10 @@ td > * {
 	
 	transform: translate3d(0, 0, 0);
 	transition: transform linear 250ms;
+}
+
+td > .paused:after {
+	animation-play-state: paused;
 }
 
 td > *:before {

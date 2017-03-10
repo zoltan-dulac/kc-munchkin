@@ -272,39 +272,72 @@ var Dot = function(x, y) {
 
 var KC = function(x, y) {
 	var 
-		me = this;
+		me = this,
+		lastCmd,
+		isMoving = false;
 	
 	me.x = x;
 	me.y = y;
+	me.dir = null;
 	me.el = null;
 
 	function move(e) {
 		
 		switch (e.key) {
 			case "ArrowDown":
-				me.el.className = 'kc move s';
+				lastCmd = 's';
 				e.preventDefault();
 				break;
 			case "ArrowUp":
-				me.el.className = 'kc move n';
+				lastCmd = 'n';
 				e.preventDefault();
 				break;
 			case "ArrowLeft":
-				me.el.className = 'kc move w';
+				lastCmd = 'w';
 				e.preventDefault();
 				break;
 			case "ArrowRight":
-				me.el.className = 'kc move e';
+				lastCmd = 'e';
 				e.preventDefault();
 				break;
+			default:
+				lastCmd = '';
 		}
-	}	
+		
+		if (lastCmd !== '') {
+			isMoving = true;
+			go();
+		}
+		
+		//me.el.className = 'kc move ' + me.dir;
+	}
+	
+	function transitionEndHandler(e) {
+		if (me.dir !== '') {
+			var cellInfo = maze.getCellInDir(me.x, me.y, me.dir);
+			cellEl = cellInfo.cell;
+			me.x = cellInfo.x;
+			me.y = cellInfo.y;
+			maze.putInCell(me.el, cellInfo.x, cellInfo.y);
+			me.el.classList.remove('n', 's', 'e', 'w');
+			setTimeout(go, 1);
+		}
+	}
+	
+	function go() {
+		me.dir = lastCmd;
+		if (lastCmd !== '') {
+			me.el.classList.add('move', lastCmd);
+		}
+	}
 	
 	me.die = function () {
 		me.el.addEventListener('animationend', me.reincarnate);
 		me.el.classList.remove('n', 's', 'e', 'w');
 		me.el.classList.add('die');
 		game.stopPlayers();
+		document.removeEventListener('keydown', move);
+		document.removeEventListener('keyup', stop);
 	}
 	
 	me.reincarnate = function () {
@@ -313,12 +346,12 @@ var KC = function(x, y) {
 		me.el.classList.remove('die');
 		me.el.classList.add('dead');
 		
-		setTimeout(game.start, 1);
+		setTimeout(game.reset, 1);
 	}
 	
 	function stop(e) {
 		e.preventDefault();
-		me.el.className='kc'
+		lastCmd = '';
 	}
 	
 	
@@ -330,7 +363,7 @@ var KC = function(x, y) {
 		
 		document.addEventListener('keydown', move);
 		document.addEventListener('keyup', stop);
-		
+		me.el.addEventListener('transitionend', transitionEndHandler);
 	}
 	
 	init();
@@ -339,7 +372,8 @@ var KC = function(x, y) {
 var MuncherDen = function (x, y) {
 	var me = this,
 		dirs = ['n', 'e', 's', 'w'],
-		openDir = dirs[0];
+		openDir = dirs[0],
+		timeout = null;
 		
 	me.el = maze.getCell(x, y);
 	
@@ -353,7 +387,11 @@ var MuncherDen = function (x, y) {
 			maze.setWall(me.x, me.y, dir, operation);
 		}
 		
-		setTimeout(rotate, 1000);
+		
+	}
+	
+	me.stop = function () {
+		clearInterval(timeout);
 	}
 	
 	function rotate() {
@@ -365,6 +403,7 @@ var MuncherDen = function (x, y) {
 	function init() {
 		me.el = maze.getCell(x,y);
 		render();
+		timeout = setInterval(rotate, 1000);
 	}
 	
 	init();
@@ -418,19 +457,36 @@ var Muncher = function (x, y, dir, speed, index) {
 
 var game = new function () {
 	var me = this,
-		dots = Array(6),
-		munchers = Array(3),
-		kc,
-		den;
+		score = 0,
+		scoreEl = document.getElementById('score');
+	
+	me.dots = Array(6),
+	me.munchers = Array(3),
+	me.kc,
+	me.den;
+	
+	
 		
 	me.randInt = function (min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 	}
 	
+	me.setScore = function (n, doIncrease) {
+		score = (doIncrease ? score + n : n);
+		scoreEl.innerHTML = score;
+	}
+	
 	me.reset = function () {
-		dots = new Array(6);
-		munchers = new Array(3);
-		den = null;
+		delete(me.dots);
+		delete(me.munchers);
+		delete(me.kc);
+		delete(me.den);
+		
+		me.dots = new Array(6);
+		me.munchers = new Array(3);
+		me.den = null;
+		me.setScore(0);
+		me.start();
 	}
 	
 	me.oppositeDir = function(dir) {
@@ -452,40 +508,42 @@ var game = new function () {
 		
 		for (x = 1; x <= maze.width; x += maze.width - 1) {
 			for ( y = 1; y <= maze.height; y += maze.height - 1) {
-				dots[i] = new Dot(x, y);
-				dots[i + 1] = new Dot (x, (y==1 ? y + 1 : y - 1));
-				dots[i + 2] = new Dot ((x==1 ? x + 1 : x - 1), y);
+				me.dots[i] = new Dot(x, y);
+				me.dots[i + 1] = new Dot (x, (y==1 ? y + 1 : y - 1));
+				me.dots[i + 2] = new Dot ((x==1 ? x + 1 : x - 1), y);
 				i+=3;;
 			}
 		}
 	}
 	
 	function createKC() {
-		kc = new KC(5, 6);
+		me.kc = new KC(5, 6);
 	}
 	
 	function createDen() {
-		den = new MuncherDen(5, 5);
+		me.den = new MuncherDen(5, 5);
 	}
 	
 	function createMunchers() {
 		var i;
 		
-		for (i=0; i<munchers.length; i++) {
-			munchers[i] = new Muncher(5 , 5, 'n', 250 + 100 * i, i);
+		for (i=0; i<me.munchers.length; i++) {
+			me.munchers[i] = new Muncher(5 , 5, 'n', 250 + 100 * i, i);
 		}
 		
 	}
 	
 	me.stopPlayers = function () {
 		var i;
-		for (i=0; i<munchers.length; i++) {
-			munchers[i].stop();
+		for (i=0; i<me.munchers.length; i++) {
+			me.munchers[i].stop();
 		}
 		
-		for (i=0; i<dots.length; i++) {
-			dots[i].stop();
+		for (i=0; i<me.dots.length; i++) {
+			me.dots[i].stop();
 		}
+		
+		me.den.stop();
 	}
 	
 	me.setPlayerDir = function (el, cellEl, currentDir) {
@@ -530,24 +588,26 @@ var game = new function () {
 	
 	function detectCollisions() {
 			var
-				objOnTop = whatIsOnTopOf(kc),
+				objOnTop = whatIsOnTopOf(me.kc),
 				i;
 				
-			if (objOnTop !== kc.el) {
+			if (objOnTop !== me.kc.el) {
 				//game.stopPlayers();
-				kc.die();
+				me.kc.die();
 			} else {
 				setTimeout(detectCollisions, 100);
 			}
 			
-			for (i=0; i<dots.length; i++) {
-				var dot = dots[i];
+			for (i=0; i<me.dots.length; i++) {
+				var dot = me.dots[i];
 				objOnTop = whatIsOnTopOf(dot);
 				
-				if (objOnTop === kc.el) {
-					console.log('ontop');
+				if (objOnTop === me.kc.el) {
+					console.log('before', me.dots);
 					dot.stop();
-					dots = dots.splice(i, 1);
+					me.dots.splice(i, 1);
+					console.log('ontop', me.dots);
+					me.setScore(10, true);
 				}
 			}
 	}
