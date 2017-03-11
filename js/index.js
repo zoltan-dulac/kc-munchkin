@@ -38,11 +38,11 @@ var maze = new function () {
 	var 
 		me = this;
 	
-	me,width = 0;
+	me.width = 0;
 	me.height = 0;
 	
 	
-	me.tblEl = gid('maze');
+	me.el = gid('maze');
 	
 	
 	me.dirs = ['s', 'e', 'w', 'n'];
@@ -53,7 +53,7 @@ var maze = new function () {
 	
 	me.getCell = function(x, y) {
 		if (0 < x && x <= me.width && 0 < y && y <= me.height) {
-			return me.tblEl.kid(y).kid(x);
+			return me.el.kid(y).kid(x);
 		} else {
 			return null;
 		}
@@ -156,28 +156,28 @@ var maze = new function () {
 	me.make = function (w, h) {
 		me.width = w;
 		me.height = h;
-		me.tblEl.innerHTML = '';
-		me.tblEl.add('tr', h);
-		me.tblEl.childNodes.map(function(x) {
+		me.el.innerHTML = '';
+		me.el.add('tr', h);
+		me.el.childNodes.map(function(x) {
 				x.add('th', 1);
 				x.add('td', w, '*');
 				x.add('th', 1);
 		});
-		me.tblEl.ins('tr');
-		me.tblEl.add('tr', 1);
-		me.tblEl.firstChild.add('th', w + 2);
-		me.tblEl.lastChild.add('th', w + 2);
+		me.el.ins('tr');
+		me.el.add('tr', 1);
+		me.el.firstChild.add('th', w + 2);
+		me.el.lastChild.add('th', w + 2);
 		for (var i = 1; i <= h; i++) {
 			for (var j = 1; j <= w; j++) {
-				me.tblEl.kid(i).kid(j).neighbors = [
-					me.tblEl.kid(i + 1).kid(j),
-					me.tblEl.kid(i).kid(j + 1),
-					me.tblEl.kid(i).kid(j - 1),
-					me.tblEl.kid(i - 1).kid(j)
+				me.el.kid(i).kid(j).neighbors = [
+					me.el.kid(i + 1).kid(j),
+					me.el.kid(i).kid(j + 1),
+					me.el.kid(i).kid(j - 1),
+					me.el.kid(i - 1).kid(j)
 				];
 			}
 		}
-		walk(me.tblEl.kid(irand(h) + 1).kid(irand(w) + 1));
+		walk(me.el.kid(irand(h) + 1).kid(irand(w) + 1));
 		
 		//Now, we must close up the maze
 		close_maze();
@@ -186,8 +186,8 @@ var maze = new function () {
 	};
 	
 	function close_maze() {
-		var firstRow = me.tblEl.kid(1),
-			lastRow = me.tblEl.kid(me.height),
+		var firstRow = me.el.kid(1),
+			lastRow = me.el.kid(me.height),
 			i;
 		
 		for (i = 1; i <= me.height; i++) {
@@ -225,14 +225,27 @@ var maze = new function () {
 	}
 	
 	me.place = function (el, x, y) {
-		me.tblEl.kid(y).kid(x).appendChild(el);
+		me.el.kid(y).kid(x).appendChild(el);
+	}
+	
+	me.setPillEatenState = function () {
+		me.el.classList.add('pill-eaten');
+	}
+	
+	me.setPillWearingOutState = function () {
+		me.el.classList.remove('pill-eaten');
+		me.el.classList.add('pill-wearing-out');
+	}
+	
+	me.setPillDoneState = function () {
+		me.el.classList.remove('pill-eaten', 'pill-wearing-out');
 	}
 };
 
 /*******************
  * DOT
  *******************/
-var Dot = function(x, y) {
+var Dot = function(x, y, classes) {
 	var
 		me = this,
 		cellEl = maze.getCell(x, y);
@@ -241,7 +254,7 @@ var Dot = function(x, y) {
 	me.y = y;
 	me.el = null;
 	
-	function transitionEndHandler(e) {
+	function animationendHandler(e) {
 		var cellInfo = maze.getCellInDir(me.x, me.y, me.dir);
 		cellEl = cellInfo.cell;
 		me.x = cellInfo.x;
@@ -257,9 +270,9 @@ var Dot = function(x, y) {
 	
 	function init() {
 		me.el = ce('div');
-		me.el.className = 'dot';
+		me.el.className = 'dot ' + (classes || '');
 		maze.putInCell(me.el, x, y);
-		me.el.addEventListener('transitionend', transitionEndHandler);
+		me.el.addEventListener('animationend', animationendHandler);
 		setTimeout(go, 1);
 	}
 	
@@ -269,6 +282,11 @@ var Dot = function(x, y) {
 	
 	init();
 };
+
+
+/*
+ *  KC
+ */
 
 var KC = function(x, y) {
 	var 
@@ -282,7 +300,7 @@ var KC = function(x, y) {
 	me.el = null;
 
 	function move(e) {
-		
+		//me.el.style.animationPlayState=''; //me.el.classList.remove('paused');
 		switch (e.key) {
 			case "ArrowDown":
 				lastCmd = 's';
@@ -300,19 +318,23 @@ var KC = function(x, y) {
 				lastCmd = 'e';
 				e.preventDefault();
 				break;
-			default:
-				lastCmd = '';
 		}
+		console.log('move', lastCmd, isMoving, lastCmd);
 		
 		if (lastCmd !== '') {
-			isMoving = true;
-			go();
+			if (isMoving) {
+				
+			} else {
+				console.log('going');
+				isMoving = true;
+				go();
+			}
 		}
 		
 		//me.el.className = 'kc move ' + me.dir;
 	}
 	
-	function transitionEndHandler(e) {
+	function animationendHandler(e) {
 		if (me.dir !== '') {
 			var cellInfo = maze.getCellInDir(me.x, me.y, me.dir);
 			cellEl = cellInfo.cell;
@@ -325,9 +347,15 @@ var KC = function(x, y) {
 	}
 	
 	function go() {
-		me.dir = lastCmd;
-		if (lastCmd !== '') {
-			me.el.classList.add('move', lastCmd);
+		var cellInfo = maze.getCell(me.x, me.y);
+		if (cellInfo.classList.contains(lastCmd)) {
+			me.dir = lastCmd;
+			if (lastCmd !== '') {
+				me.el.classList.add('move', lastCmd);
+			}
+		} else {
+			me.el.classList.remove('move', 'n', 's', 'e', 'w');
+			isMoving = false;
 		}
 	}
 	
@@ -341,7 +369,6 @@ var KC = function(x, y) {
 	}
 	
 	me.reincarnate = function () {
-		console.log('xxx')
 		me.el.removeEventListener('animationend', me.reincarnate);
 		me.el.classList.remove('die');
 		me.el.classList.add('dead');
@@ -351,7 +378,8 @@ var KC = function(x, y) {
 	
 	function stop(e) {
 		e.preventDefault();
-		lastCmd = '';
+		//lastCmd = '';
+		//me.el.style.animationPlayState='paused'; //classList.add('paused');
 	}
 	
 	
@@ -363,7 +391,7 @@ var KC = function(x, y) {
 		
 		document.addEventListener('keydown', move);
 		document.addEventListener('keyup', stop);
-		me.el.addEventListener('transitionend', transitionEndHandler);
+		me.el.addEventListener('animationend', animationendHandler);
 	}
 	
 	init();
@@ -422,7 +450,7 @@ var Muncher = function (x, y, dir, speed, index) {
 	me.dir = dir;
 	me.speed = speed;
 	
-	function transitionEndHandler(e) {
+	function animationendHandler(e) {
 		var cellInfo = maze.getCellInDir(me.x, me.y, me.dir);
 		cellEl = cellInfo.cell;
 		me.x = cellInfo.x;
@@ -443,10 +471,10 @@ var Muncher = function (x, y, dir, speed, index) {
 	function init() {
 		me.el = ce('div');
 		
-		me.el.addEventListener('transitionend', transitionEndHandler);
+		me.el.addEventListener('animationend', animationendHandler);
 		me.el.className = 'muncher muncher-'+ index;
 		
-		me.el.style.transitionDuration = me.speed + 'ms';
+		me.el.style.animationDuration = me.speed + 'ms';
 		maze.putInCell(me.el, x, y);
 		setTimeout(go, 1);
 		
@@ -458,14 +486,30 @@ var Muncher = function (x, y, dir, speed, index) {
 var game = new function () {
 	var me = this,
 		score = 0,
-		scoreEl = document.getElementById('score');
+		scoreEl = document.getElementById('score'),
+		dotSpeedEl = document.getElementById('dot-speed'),
+		dotSpeed;
 	
 	me.dots = Array(6),
 	me.munchers = Array(3),
 	me.kc,
-	me.den;
+	me.den,
+	me.dotSpeed;
 	
-	
+	Object.defineProperty(
+		me, 
+		'dotSpeed',
+		{
+			set: function (n) {
+				dotSpeedEl.innerHTML = 'td > .dot {	animation-duration: ' + n + 'ms;}';
+				dotSpeed = n;
+			},
+			
+			get: function (n) {
+				return dotSpeed;
+			}
+		}
+	);
 		
 	me.randInt = function (min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -476,16 +520,18 @@ var game = new function () {
 		scoreEl.innerHTML = score;
 	}
 	
-	me.reset = function () {
+	me.reset = function (keepScore) {
 		delete(me.dots);
 		delete(me.munchers);
 		delete(me.kc);
 		delete(me.den);
-		
+		maze.setPillDoneState();
 		me.dots = new Array(6);
 		me.munchers = new Array(3);
 		me.den = null;
-		me.setScore(0);
+		if (!keepScore) {
+			me.setScore(0);
+		}
 		me.start();
 	}
 	
@@ -508,7 +554,7 @@ var game = new function () {
 		
 		for (x = 1; x <= maze.width; x += maze.width - 1) {
 			for ( y = 1; y <= maze.height; y += maze.height - 1) {
-				me.dots[i] = new Dot(x, y);
+				me.dots[i] = new Dot(x, y, 'pill');
 				me.dots[i + 1] = new Dot (x, (y==1 ? y + 1 : y - 1));
 				me.dots[i + 2] = new Dot ((x==1 ? x + 1 : x - 1), y);
 				i+=3;;
@@ -603,22 +649,36 @@ var game = new function () {
 				objOnTop = whatIsOnTopOf(dot);
 				
 				if (objOnTop === me.kc.el) {
-					console.log('before', me.dots);
 					dot.stop();
 					me.dots.splice(i, 1);
-					console.log('ontop', me.dots);
-					me.setScore(10, true);
+					
+					if (dot.el.classList.contains('pill')) {
+						me.setScore(50, true);
+						maze.setPillEatenState();
+						setTimeout(maze.setPillWearingOutState, 8000);
+						setTimeout(maze.setPillDoneState, 10000);
+						
+					} else {
+						me.setScore(10, true);
+					}
+					me.dotSpeed -= 80;
+					if (me.dots.length === 0) {
+						me.reset(true);
+					}
 				}
 			}
 	}
 	
+	
+	
 	me.start = function () {
 		maze.make(9, 7);
+		maze.setPillDoneState();
 		createDots();
 		createKC();
 		createDen();
 		createMunchers();
-		
+		me.dotSpeed = 1000;
 		detectCollisions();
 	}
 };

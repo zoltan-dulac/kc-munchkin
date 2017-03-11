@@ -71,10 +71,10 @@ td > * {
 	image-rendering: pixelated;
 	
 	transform: translate3d(0, 0, 0);
-	transition: transform linear 250ms;
+	/* transition: transform linear 250ms; */
 }
 
-td > .paused:after {
+td > .paused {
 	animation-play-state: paused;
 }
 
@@ -106,25 +106,25 @@ td > *:after {
 
 /* Moving */
 td > .w {
-	transform: translate3d(calc(-120vmin / 9), 0, 0);
+	animation: go-west linear 250ms;
 }
 
 
 td > .e {
-	transform: translate3d(calc(120vmin / 9), 0, 0);
+	animation: go-east linear 250ms;
 }
 
 td > .n {
-	transform: translate3d(0, calc(-120vmin / 9), 0);
+	animation: go-north linear 250ms;
 }
 
 td > .s {
-	transform: translate3d(0, calc(120vmin / 9), 0);
+	animation: go-south linear 250ms;
 }
 
-.dot {
+td > .dot {
 	z-index: 10;
-	transition: transform linear 1000ms;
+	/* transition: transform linear 1000ms; */
 }
 
 .kc {
@@ -140,8 +140,11 @@ td > .s {
 }
 
 .dot:after {
-	
 	background-image: url('../images/dot.gif');
+}
+
+.dot.pill:after {
+	background-image: url('../images/pill.gif');
 }
 
 .muncher:before {
@@ -160,6 +163,14 @@ td > .s {
 
 .muncher-2:after {
 	filter: hue-rotate(260deg);
+}
+
+.pill-eaten .muncher:after {
+	filter: saturate(0%) brightness(2);
+}
+
+.pill-wearing-out .muncher {
+	animation: muncher-flash 250ms infinite;
 }
 
 .muncher.e:after {
@@ -225,13 +236,40 @@ td > .s {
 
 
 @keyframes kc-die {
-  100% { background-position: calc(-96vmin / 9 * 8) }
+	100% { background-position: calc(-96vmin / 9 * 8) }
 }
 
 @keyframes kc-move {
-  100% { background-position: calc(-96vmin / 9 * 4) }
+	100% { background-position: calc(-96vmin / 9 * 4) }
 }
 
 @keyframes muncher-move {
-  100% { background-position: calc(-96vmin / 9 * 2) }
+	100% { background-position: calc(-96vmin / 9 * 2) }
 }
+
+@keyframes muncher-flash {
+	0%, 50%, 100% {
+		 opacity: 1;
+	}
+	25%, 75% {
+		 opacity: 0;
+	}
+}
+
+@keyframes go-west {
+	100% { transform: translate3d(calc(-120vmin / 9), 0, 0); }
+}
+
+@keyframes go-east {
+	100% { transform: translate3d(calc(120vmin / 9), 0, 0); }
+}
+
+@keyframes go-north {
+	100% { 	transform: translate3d(0, calc(-120vmin / 9), 0); }
+}
+
+@keyframes go-south {
+	100% { 	transform: translate3d(0, calc(120vmin / 9), 0); }
+}
+
+
