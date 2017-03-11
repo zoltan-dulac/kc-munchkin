@@ -36,7 +36,8 @@ function ce(tag, txt) {
 
 var maze = new function () { 
 	var 
-		me = this;
+		me = this,
+		stateTimeout;
 	
 	me.width = 0;
 	me.height = 0;
@@ -226,20 +227,32 @@ var maze = new function () {
 	
 	me.place = function (el, x, y) {
 		me.el.kid(y).kid(x).appendChild(el);
-	}
+	};
 	
-	me.setPillEatenState = function () {
-		me.el.classList.add('pill-eaten');
-	}
-	
-	me.setPillWearingOutState = function () {
-		me.el.classList.remove('pill-eaten');
-		me.el.classList.add('pill-wearing-out');
-	}
-	
-	me.setPillDoneState = function () {
-		me.el.classList.remove('pill-eaten', 'pill-wearing-out');
-	}
+	me.setState = function (state) {
+		switch(state){
+			case 'pill-eaten':
+				clearTimeout(stateTimeout);
+				me.el.classList.add('pill-eaten');
+				stateTimeout = setTimeout(function() {
+					me.setState('pill-wearing-out');
+				}, 8000);
+				game.canEatGhosts = true;
+				break;
+			case 'pill-wearing-out':
+				me.el.classList.remove('pill-eaten');
+				me.el.classList.add('pill-wearing-out');
+				stateTimeout = setTimeout(function() {
+					me.setState('pill-done');
+				}, 2000);
+				break;
+			case 'pill-done':
+				clearTimeout(stateTimeout);
+				me.el.classList.remove('pill-eaten', 'pill-wearing-out');
+				game.canEatGhosts = false;
+				break;
+			}
+	};
 };
 
 /*******************
@@ -319,13 +332,11 @@ var KC = function(x, y) {
 				e.preventDefault();
 				break;
 		}
-		console.log('move', lastCmd, isMoving, lastCmd);
 		
 		if (lastCmd !== '') {
 			if (isMoving) {
 				
 			} else {
-				console.log('going');
 				isMoving = true;
 				go();
 			}
@@ -488,13 +499,15 @@ var game = new function () {
 		score = 0,
 		scoreEl = document.getElementById('score'),
 		dotSpeedEl = document.getElementById('dot-speed'),
-		dotSpeed;
+		dotSpeed,
+		collisionInterval;
 	
 	me.dots = Array(6),
 	me.munchers = Array(3),
 	me.kc,
 	me.den,
 	me.dotSpeed;
+	me.canEatGhosts = false;
 	
 	Object.defineProperty(
 		me, 
@@ -525,15 +538,18 @@ var game = new function () {
 		delete(me.munchers);
 		delete(me.kc);
 		delete(me.den);
-		maze.setPillDoneState();
+		maze.setState('pill-done');
 		me.dots = new Array(6);
 		me.munchers = new Array(3);
+		me.canEatGhosts = false;
+		clearInterval(collisionInterval);
+		
 		me.den = null;
 		if (!keepScore) {
 			me.setScore(0);
 		}
 		me.start();
-	}
+	};
 	
 	me.oppositeDir = function(dir) {
 		switch(dir) {
@@ -638,10 +654,14 @@ var game = new function () {
 				i;
 				
 			if (objOnTop !== me.kc.el) {
-				//game.stopPlayers();
-				me.kc.die();
-			} else {
-				setTimeout(detectCollisions, 100);
+				if (me.canEatGhosts) { 
+					if (!objOnTop.el.classList.contains('eaten')) {
+						objOnTop.el.classList.add('eaten');
+						me.setScore(100, true);
+					}
+				} else {
+					me.kc.die()
+				};
 			}
 			
 			for (i=0; i<me.dots.length; i++) {
@@ -654,10 +674,8 @@ var game = new function () {
 					
 					if (dot.el.classList.contains('pill')) {
 						me.setScore(50, true);
-						maze.setPillEatenState();
-						setTimeout(maze.setPillWearingOutState, 8000);
-						setTimeout(maze.setPillDoneState, 10000);
-						
+						maze.setState('pill-eaten');
+						game.setState('pill-eaten');
 					} else {
 						me.setScore(10, true);
 					}
@@ -673,13 +691,13 @@ var game = new function () {
 	
 	me.start = function () {
 		maze.make(9, 7);
-		maze.setPillDoneState();
+		maze.setState('pill-done');
 		createDots();
 		createKC();
 		createDen();
 		createMunchers();
 		me.dotSpeed = 1000;
-		detectCollisions();
+		collisionInterval = setInterval(detectCollisions, 100);
 	}
 };
 

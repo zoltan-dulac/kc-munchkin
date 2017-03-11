@@ -169,8 +169,12 @@ td > .dot {
 	filter: saturate(0%) brightness(2);
 }
 
-.pill-wearing-out .muncher {
+.pill-wearing-out .muncher:after {
 	animation: muncher-flash 250ms infinite;
+}
+
+.muncher.eaten:after {
+	opacity: 0;
 }
 
 .muncher.e:after {
