@@ -36,8 +36,7 @@ function ce(tag, txt) {
 
 var maze = new function () { 
 	var 
-		me = this,
-		stateTimeout;
+		me = this;
 	
 	me.width = 0;
 	me.height = 0;
@@ -230,29 +229,12 @@ var maze = new function () {
 	};
 	
 	me.setState = function (state) {
-		switch(state){
-			case 'pill-eaten':
-				clearTimeout(stateTimeout);
-				me.el.classList.add('pill-eaten');
-				stateTimeout = setTimeout(function() {
-					me.setState('pill-wearing-out');
-				}, 8000);
-				game.canEatGhosts = true;
-				break;
-			case 'pill-wearing-out':
-				me.el.classList.remove('pill-eaten');
-				me.el.classList.add('pill-wearing-out');
-				stateTimeout = setTimeout(function() {
-					me.setState('pill-done');
-				}, 2000);
-				break;
-			case 'pill-done':
-				clearTimeout(stateTimeout);
-				me.el.classList.remove('pill-eaten', 'pill-wearing-out');
-				game.canEatGhosts = false;
-				break;
-			}
-	};
+		me.el.classList.remove('pill-eaten', 'pill-wearing-out');
+		if (state !== '') {
+			me.el.classList.add(state);
+		}
+	}
+	
 };
 
 /*******************
@@ -278,7 +260,7 @@ var Dot = function(x, y, classes) {
 	}
 	
 	function go() {
-		me.dir = game.setPlayerDir(me.el, cellEl, me.dir);
+		me.dir = game.setPlayerDir(me, cellEl, me.dir);
 	}
 	
 	function init() {
@@ -468,19 +450,48 @@ var Muncher = function (x, y, dir, speed, index) {
 		me.y = cellInfo.y;
 		maze.putInCell(me.el, cellInfo.x, cellInfo.y);
 		me.el.classList.remove('n', 's', 'e', 'w');
+		
+		// if the muncher is in the pen and was eaten, reincarnate it.
+		if (me.x === game.den.x && me.y === game.den.y) {
+			me.reincarnate();
+		}
+		
 		setTimeout(go, 1);
 	}
 	
 	function go() {
-		me.dir = game.setPlayerDir(me.el, cellEl, me.dir);
+		var aimCoord;
+		if (me.isEaten()) {
+			aimCoord = {
+				x: game.den.x,
+				y: game.den.y
+			}
+		} else {
+			aimCoord = null;
+		}
+		me.dir = game.setPlayerDir(me, cellEl, me.dir, aimCoord);
 	}
 	
 	me.stop = function() {
 		me.el.classList.add('stop');
 	}
 	
+	me.isEaten = function () {
+		return me.el.classList.contains('eaten');
+	}
+	
+	me.die = function () {
+		me.el.classList.add('eaten');
+	}
+	
+	me.reincarnate = function () {
+		me.el.classList.remove('eaten');
+	}
+	
 	function init() {
 		me.el = ce('div');
+		
+		me.el.__player = me;
 		
 		me.el.addEventListener('animationend', animationendHandler);
 		me.el.className = 'muncher muncher-'+ index;
@@ -491,6 +502,7 @@ var Muncher = function (x, y, dir, speed, index) {
 		
 	}
 	
+	
 	init();
 }
 
@@ -500,14 +512,15 @@ var game = new function () {
 		scoreEl = document.getElementById('score'),
 		dotSpeedEl = document.getElementById('dot-speed'),
 		dotSpeed,
-		collisionInterval;
+		collisionInterval,
+		stateTimeout;
 	
 	me.dots = Array(6),
 	me.munchers = Array(3),
 	me.kc,
 	me.den,
 	me.dotSpeed;
-	me.canEatGhosts = false;
+	me.canEatMunchers = false;
 	
 	Object.defineProperty(
 		me, 
@@ -538,10 +551,10 @@ var game = new function () {
 		delete(me.munchers);
 		delete(me.kc);
 		delete(me.den);
-		maze.setState('pill-done');
+		me.setState('');
 		me.dots = new Array(6);
 		me.munchers = new Array(3);
-		me.canEatGhosts = false;
+		me.canEatMunchers = false;
 		clearInterval(collisionInterval);
 		
 		me.den = null;
@@ -608,7 +621,7 @@ var game = new function () {
 		me.den.stop();
 	}
 	
-	me.setPlayerDir = function (el, cellEl, currentDir) {
+	me.setPlayerDir = function (player, cellEl, currentDir, aimCoord) {
 		var
 			dir,
 			possibleDirs = cellEl.classList
@@ -625,7 +638,7 @@ var game = new function () {
 		
 		dir = nextDir;
 		
-		el.classList.add(dir);
+		player.el.classList.add(dir);
 		return dir;
 	}
 	
@@ -639,27 +652,19 @@ var game = new function () {
 		return objOnTop;
 	}
 	
-	function removeItemFromArray(item, array) {
-		var index = array.indexOf(item);
-		if (index > -1) {
-			return array.splice(index, 1);
-		} else {
-			return array;
-		}
-	}
-	
 	function detectCollisions() {
 			var
 				objOnTop = whatIsOnTopOf(me.kc),
+				playerOnTop = objOnTop.__player,
 				i;
 				
 			if (objOnTop !== me.kc.el) {
-				if (me.canEatGhosts) { 
-					if (!objOnTop.el.classList.contains('eaten')) {
-						objOnTop.el.classList.add('eaten');
+				if (me.canEatMunchers) { 
+					if (!playerOnTop.isEaten()) {
+						playerOnTop.die();
 						me.setScore(100, true);
 					}
-				} else {
+				} else if (!playerOnTop.isEaten()){
 					me.kc.die()
 				};
 			}
@@ -674,8 +679,7 @@ var game = new function () {
 					
 					if (dot.el.classList.contains('pill')) {
 						me.setScore(50, true);
-						maze.setState('pill-eaten');
-						game.setState('pill-eaten');
+						me.setState('pill-eaten');
 					} else {
 						me.setScore(10, true);
 					}
@@ -688,15 +692,37 @@ var game = new function () {
 	}
 	
 	
+	me.setState = function (state) {
+		maze.setState(state);
+		switch(state){
+			case 'pill-eaten':
+				clearTimeout(stateTimeout);
+				stateTimeout = setTimeout(function() {
+					me.setState('pill-wearing-out');
+				}, 8000);
+				game.canEatMunchers = true;
+				break;
+			case 'pill-wearing-out':
+				stateTimeout = setTimeout(function() {
+					me.setState('');
+				}, 2000);
+				break;
+			case '':
+				clearTimeout(stateTimeout);
+				game.canEatMunchers = false;
+				break;
+			}
+	};
+	
 	
 	me.start = function () {
 		maze.make(9, 7);
-		maze.setState('pill-done');
+		me.setState('');
 		createDots();
 		createKC();
 		createDen();
 		createMunchers();
-		me.dotSpeed = 1000;
+		me.dotSpeed = 3000;
 		collisionInterval = setInterval(detectCollisions, 100);
 	}
 };
