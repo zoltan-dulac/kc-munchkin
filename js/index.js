@@ -519,7 +519,9 @@ var Muncher = function (x, y, dir, speed, index) {
 var game = new function () {
 	var me = this,
 		score = 0,
+		highScore = 0,
 		scoreEl = document.getElementById('score'),
+		highScoreEl = document.getElementById('high-score'),
 		dotSpeedEl = document.getElementById('dot-speed'),
 		dotSpeed,
 		collisionInterval,
@@ -575,6 +577,11 @@ var game = new function () {
 			var box = me.kc.el.getBoundingClientRect();
 			setBonusDisplay(box.x, box.y, n);
 		}
+	}
+	
+	function setHighScore(s) {
+		highScore = s;
+		highScoreEl.innerHTML = s;
 	}
 	
 	me.reset = function (keepScore) {
@@ -741,7 +748,10 @@ var game = new function () {
 						me.setScore(Math.pow(2, munchersEaten) * 100, true, true);
 					}
 				} else if (!playerOnTop.isEaten()){
-					me.kc.die()
+					me.kc.die();
+					if (score > highScore) {
+						setHighScore(score);
+					}
 				};
 			}
 			
