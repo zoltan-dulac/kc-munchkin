@@ -106,20 +106,20 @@ td > *:after {
 
 /* Moving */
 td > .w {
-	animation: go-west linear 250ms;
+	animation: go-west linear 500ms;
 }
 
 
 td > .e {
-	animation: go-east linear 250ms;
+	animation: go-east linear 500ms;
 }
 
 td > .n {
-	animation: go-north linear 250ms;
+	animation: go-north linear 500ms;
 }
 
 td > .s {
-	animation: go-south linear 250ms;
+	animation: go-south linear 500ms;
 }
 
 td > .dot {

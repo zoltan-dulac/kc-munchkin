@@ -47,7 +47,6 @@ var maze = new function () {
 	
 	me.dirs = ['s', 'e', 'w', 'n'];
 	
-	
 	function gid(e) { return document.getElementById(e); }
 	function irand(x) { return Math.floor(Math.random() * x); }
 	
@@ -57,6 +56,15 @@ var maze = new function () {
 		} else {
 			return null;
 		}
+	}
+	
+	me.getCellDirs = function (x, y) {
+		return Array.from(me.getCell(x, y).classList);
+	}
+	
+	me.canGoInDir = function(x, y, dir) {
+		var cell = me.getCell(x, y);
+		return (cell.classList.contains(dir));
 	}
 	
 	me.getCellInDir = function(x, y, dir) {
@@ -330,12 +338,14 @@ var KC = function(x, y) {
 	function animationendHandler(e) {
 		if (me.dir !== '') {
 			var cellInfo = maze.getCellInDir(me.x, me.y, me.dir);
-			cellEl = cellInfo.cell;
-			me.x = cellInfo.x;
-			me.y = cellInfo.y;
-			maze.putInCell(me.el, cellInfo.x, cellInfo.y);
-			me.el.classList.remove('n', 's', 'e', 'w');
+			if (cellInfo) {
+				cellEl = cellInfo.cell;
+				me.x = cellInfo.x;
+				me.y = cellInfo.y;
+				maze.putInCell(me.el, cellInfo.x, cellInfo.y);
+				me.el.classList.remove('n', 's', 'e', 'w');
 			setTimeout(go, 1);
+			}
 		}
 	}
 	
@@ -538,7 +548,7 @@ var game = new function () {
 	);
 		
 	me.randInt = function (min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+	return Math.floor(Math.random() * (max - min + 1)) + min;
 	}
 	
 	me.setScore = function (n, doIncrease) {
@@ -621,7 +631,44 @@ var game = new function () {
 		me.den.stop();
 	}
 	
-	me.setPlayerDir = function (player, cellEl, currentDir, aimCoord) {
+	me.getTargetedDirs = function (player, target, goAway) {
+		var possibleDirs = maze.getCellDirs(player.x, player.y),
+			favouredDirs = [],
+			returnDirs = [],
+			badDir = (possibleDirs.length > 1) ? me.oppositeDir(player.dir) : null ;
+		
+		
+		if (player.x > target.x) {
+			favouredDirs.push(goAway ? 'e' : 'w');
+		} else if (player.x < target.x) {
+			favouredDirs.push(goAway ? 'w' : 'e');
+		}
+		
+		if (player.y > target.y) {
+			favouredDirs.push(goAway ? 's' : 'n');
+		} else if (player.y < target.y){
+			favouredDirs.push(goAway ? 'n' : 's');
+		}
+		
+		//me.shuffleArray(possibleDirs);
+		
+		/*
+		 * we push the favoured directions twice on the return value
+		 */
+		for (var i=0; i < possibleDirs.length; i++) {
+			var dir = possibleDirs[i];
+			if (dir !== badDir) {
+				if (favouredDirs.indexOf(dir) > -1) {
+					returnDirs.push(dir);
+				}
+				returnDirs.push(dir);
+			}
+		}
+		
+		return returnDirs;
+	}
+	
+	me.setPlayerDir = function (player, cellEl, currentDir, aimCoords) {
 		var
 			dir,
 			possibleDirs = cellEl.classList
@@ -630,9 +677,14 @@ var game = new function () {
 			nextDir = possibleDirs[nextDirIndex];
 			
 		if (numPossibleDirs > 1) {
-			if (nextDir === game.oppositeDir(currentDir)) {
-				nextDirIndex = (nextDirIndex + 1) % numPossibleDirs;
-				nextDir = possibleDirs[nextDirIndex];
+			if (aimCoords) {
+				var targetDirs = me.getTargetedDirs(player, aimCoords);
+				nextDir = targetDirs[me.randInt(0, targetDirs.length - 1)];
+			} else {
+				if (nextDir === game.oppositeDir(currentDir)) {
+					nextDirIndex = (nextDirIndex + 1) % numPossibleDirs;
+					nextDir = possibleDirs[nextDirIndex];
+				}
 			}
 		}
 		
@@ -683,7 +735,7 @@ var game = new function () {
 					} else {
 						me.setScore(10, true);
 					}
-					me.dotSpeed -= 80;
+					me.dotSpeed -= 250;
 					if (me.dots.length === 0) {
 						me.reset(true);
 					}
@@ -710,19 +762,41 @@ var game = new function () {
 			case '':
 				clearTimeout(stateTimeout);
 				game.canEatMunchers = false;
+				
+				if (me.munchers) {
+					for (var i = 0; i < me.munchers.length; i++) {
+						me.munchers[i].reincarnate();
+					}
+				}
 				break;
 			}
 	};
 	
+	/**
+	 * Shuffles array in place. 
+	 * From http://stackoverflow.com/questions/6274339/how-can-i-shuffle-an-array
+	 * 
+	 * @param {Array} a items The array containing the items.
+	 */
+	me.shuffleArray = function (a) {
+		var j, x, i;
+		for (i = a.length; i; i--) {
+			j = Math.floor(Math.random() * i);
+			x = a[i - 1];
+			a[i - 1] = a[j];
+			a[j] = x;
+		}
+	}
+	
 	
 	me.start = function () {
 		maze.make(9, 7);
-		me.setState('');
 		createDots();
 		createKC();
 		createDen();
 		createMunchers();
 		me.dotSpeed = 3000;
+		me.setState('');
 		collisionInterval = setInterval(detectCollisions, 100);
 	}
 };
