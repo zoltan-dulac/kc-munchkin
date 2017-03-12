@@ -523,7 +523,9 @@ var game = new function () {
 		dotSpeedEl = document.getElementById('dot-speed'),
 		dotSpeed,
 		collisionInterval,
-		stateTimeout;
+		stateTimeout,
+		bonusDisplayEl = document.getElementById('bonus-display'),
+		munchersEaten = 0;
 	
 	me.dots = Array(6),
 	me.munchers = Array(3),
@@ -546,26 +548,47 @@ var game = new function () {
 			}
 		}
 	);
+	
+	setBonusDisplay = function(x, y, val) {
+		var style = bonusDisplayEl.style;
+		style.left = x + 'px';
+		style.top = y + 'px';
+		bonusDisplayEl.innerHTML = val;
+		bonusDisplayEl.className = 'show';
+	}
+	
+	function bonusDisplayAnimationEnd(e) {
+		bonusDisplayEl.innerHTML = '';
+		bonusDisplayEl.className = '';
+		bonusDisplayEl.style.top = '-100px';
+	}
 		
 	me.randInt = function (min, max) {
 	return Math.floor(Math.random() * (max - min + 1)) + min;
 	}
 	
-	me.setScore = function (n, doIncrease) {
+	me.setScore = function (n, doIncrease, isBonus) {
 		score = (doIncrease ? score + n : n);
 		scoreEl.innerHTML = score;
+		
+		if (isBonus) {
+			var box = me.kc.el.getBoundingClientRect();
+			setBonusDisplay(box.x, box.y, n);
+		}
 	}
 	
 	me.reset = function (keepScore) {
+		me.den.stop();
 		delete(me.dots);
 		delete(me.munchers);
 		delete(me.kc);
 		delete(me.den);
-		me.setState('');
+		
+		clearInterval(collisionInterval);
 		me.dots = new Array(6);
 		me.munchers = new Array(3);
 		me.canEatMunchers = false;
-		clearInterval(collisionInterval);
+		
 		
 		me.den = null;
 		if (!keepScore) {
@@ -714,7 +737,8 @@ var game = new function () {
 				if (me.canEatMunchers) { 
 					if (!playerOnTop.isEaten()) {
 						playerOnTop.die();
-						me.setScore(100, true);
+						munchersEaten++;
+						me.setScore(Math.pow(2, munchersEaten) * 100, true, true);
 					}
 				} else if (!playerOnTop.isEaten()){
 					me.kc.die()
@@ -767,6 +791,7 @@ var game = new function () {
 					for (var i = 0; i < me.munchers.length; i++) {
 						me.munchers[i].reincarnate();
 					}
+					munchersEaten = 0;
 				}
 				break;
 			}
@@ -799,6 +824,14 @@ var game = new function () {
 		me.setState('');
 		collisionInterval = setInterval(detectCollisions, 100);
 	}
+	
+	me.init = function () {
+		bonusDisplayEl.addEventListener('animationend', bonusDisplayAnimationEnd);
+		me.start();
+	}
+	
+	
 };
 
-game.start();
+
+game.init();

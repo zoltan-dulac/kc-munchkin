@@ -238,6 +238,18 @@ td > .dot {
 	transform: scaleX(-1) rotate(-90deg);
 }
 
+#bonus-display {
+	position: absolute;
+	font-size: 2vmin;
+	transform: translate3d(0, 0, 0);
+	opacity: 0;
+}
+
+#bonus-display.show {
+	animation: show-bonus 500ms;
+	
+}
+
 
 @keyframes kc-die {
 	100% { background-position: calc(-96vmin / 9 * 8) }
@@ -276,4 +288,22 @@ td > .dot {
 	100% { 	transform: translate3d(0, calc(120vmin / 9), 0); }
 }
 
+
+@keyframes show-bonus {
+	0% {
+		opacity: 0,
+		transform3d(0, 0, 0);
+	}
+	
+	50% {
+		opacity: 1;
+		transform: translate3d(0, 0, 0) scale(2);
+	}
+	
+	100% {
+		opacity: 1;
+		transform: translate3d(0, 0, 0) scale(2);
+	}
+	
+}
 
