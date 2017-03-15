@@ -145,6 +145,7 @@ td > .dot {
 
 .dot.pill:after {
 	background-image: url('../images/pill.gif');
+	animation: rotate-pallette 1000ms infinite;
 }
 
 .muncher:before {
@@ -305,5 +306,15 @@ td > .dot {
 		transform: translate3d(0, 0, 0) scale(2);
 	}
 	
+}
+
+@keyframes rotate-pallette {
+	0% {
+		filter: hue-rotate(0deg);
+	}
+	
+	100% {
+		filter: hue-rotate(360deg);
+	}
 }
 
