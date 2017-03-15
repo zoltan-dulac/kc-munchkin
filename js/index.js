@@ -295,12 +295,25 @@ var KC = function(x, y) {
 	var 
 		me = this,
 		lastCmd,
-		isMoving = false;
+		isMoving = false,
+		isSoundPlaying = false;
 	
 	me.x = x;
 	me.y = y;
 	me.dir = null;
 	me.el = null;
+	
+	function playSound() {
+		if (!isSoundPlaying) {
+			game.sounds['kc-move'].play();
+			isSoundPlaying = true;
+		}
+	}
+	
+	function stopSound() {
+		game.sounds['kc-move'].pause();
+		isSoundPlaying = false;
+	}
 
 	function move(e) {
 		//me.el.style.animationPlayState=''; //me.el.classList.remove('paused');
@@ -354,10 +367,14 @@ var KC = function(x, y) {
 		if (cellInfo.classList.contains(lastCmd)) {
 			me.dir = lastCmd;
 			if (lastCmd !== '') {
+				console.log('www')
+				playSound();
+				
 				me.el.classList.add('move', lastCmd);
 			}
 		} else {
 			me.el.classList.remove('move', 'n', 's', 'e', 'w');
+			stopSound();
 			isMoving = false;
 		}
 	}
@@ -366,9 +383,13 @@ var KC = function(x, y) {
 		me.el.addEventListener('animationend', me.reincarnate);
 		me.el.classList.remove('n', 's', 'e', 'w');
 		me.el.classList.add('die');
+		stopSound();
+		isSoundPlaying=false;
+		game.sounds['kc-die1'].play();
 		game.stopPlayers();
 		document.removeEventListener('keydown', move);
 		document.removeEventListener('keyup', stop);
+		
 	}
 	
 	me.reincarnate = function () {
@@ -381,6 +402,7 @@ var KC = function(x, y) {
 	
 	function stop(e) {
 		e.preventDefault();
+		//game.sounds['kc-move'].stop();
 		//lastCmd = '';
 		//me.el.style.animationPlayState='paused'; //classList.add('paused');
 	}
@@ -492,6 +514,7 @@ var Muncher = function (x, y, dir, speed, index) {
 	
 	me.die = function () {
 		me.el.classList.add('eaten');
+		game.sounds['muncher-eaten'].play();
 	}
 	
 	me.reincarnate = function () {
@@ -534,7 +557,8 @@ var game = new function () {
 	me.kc,
 	me.den,
 	me.dotSpeed;
-	me.canEatMunchers = false;
+	me.canEatMunchers = false,
+	me.sounds = {};
 	
 	Object.defineProperty(
 		me, 
@@ -601,6 +625,7 @@ var game = new function () {
 		if (!keepScore) {
 			me.setScore(0);
 		}
+		game.sounds['kc-move'].pause();
 		me.start();
 	};
 	
@@ -764,9 +789,11 @@ var game = new function () {
 					me.dots.splice(i, 1);
 					
 					if (dot.el.classList.contains('pill')) {
+						game.sounds['eat-pill'].play();
 						me.setScore(50, true);
 						me.setState('pill-eaten');
 					} else {
+						game.sounds['eat-dot'].play();
 						me.setScore(10, true);
 					}
 					me.dotSpeed -= 250;
@@ -789,6 +816,7 @@ var game = new function () {
 				game.canEatMunchers = true;
 				break;
 			case 'pill-wearing-out':
+				me.sounds['warning'].play();
 				stateTimeout = setTimeout(function() {
 					me.setState('');
 				}, 2000);
@@ -835,8 +863,29 @@ var game = new function () {
 		collisionInterval = setInterval(detectCollisions, 100);
 	}
 	
+	function initSounds() {
+		var soundFiles = ['eat-dot', 'eat-pill', 'kc-die1', 'muncher-eaten', 'warning', 'kc-move'],
+			i;
+			
+		for (var i=0; i<soundFiles.length; i++) {
+			var file = soundFiles[i];
+			me.sounds[file] =new Howl({
+				autoplay: (i === 'kc-move'),
+			  src: ['sounds/' + file + '.wav'],
+			  loop: (i === 'kc-move')
+			});
+		}
+		
+		console.log('alet');
+		me.sounds['kc-move'].loop(true);
+		me.sounds['kc-move'].play();
+		me.sounds['kc-move'].pause();
+		me.sounds['kc-move'].volume(0.1);
+	}
+	
 	me.init = function () {
 		bonusDisplayEl.addEventListener('animationend', bonusDisplayAnimationEnd);
+		initSounds();
 		me.start();
 	}
 	
