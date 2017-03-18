@@ -24,6 +24,8 @@ table {
 	xborder-collapse: collapse;
 	width: calc(96vmin * 9 / 7);
 	height: 96vmin;
+	transform: translateZ(0);
+	transform-origin: 0 0;
 }
 
 th {
@@ -249,6 +251,12 @@ td > .dot {
 #bonus-display.show {
 	animation: show-bonus 500ms;
 	
+}
+
+@media screen and (orientation:portrait) {
+	table {
+		transform: translateZ(0) rotate(90deg) translateY(-100vw);
+	}
 }
 
 

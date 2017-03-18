@@ -367,7 +367,6 @@ var KC = function(x, y) {
 		if (cellInfo.classList.contains(lastCmd)) {
 			me.dir = lastCmd;
 			if (lastCmd !== '') {
-				console.log('www')
 				playSound();
 				
 				me.el.classList.add('move', lastCmd);
@@ -579,6 +578,7 @@ var game = new function () {
 		var style = bonusDisplayEl.style;
 		style.left = x + 'px';
 		style.top = y + 'px';
+		
 		bonusDisplayEl.innerHTML = val;
 		bonusDisplayEl.className = 'show';
 	}
@@ -599,7 +599,7 @@ var game = new function () {
 		
 		if (isBonus) {
 			var box = me.kc.el.getBoundingClientRect();
-			setBonusDisplay(box.x, box.y, n);
+			setBonusDisplay(box.left, box.top, n);
 		}
 	}
 	
@@ -802,6 +802,7 @@ var game = new function () {
 					}
 				}
 			}
+			requestAnimationFrame(detectCollisions);
 	}
 	
 	
@@ -860,7 +861,7 @@ var game = new function () {
 		createMunchers();
 		me.dotSpeed = 3000;
 		me.setState('');
-		collisionInterval = setInterval(detectCollisions, 100);
+		collisionInterval = requestAnimationFrame(detectCollisions, 100);
 	}
 	
 	function initSounds() {
@@ -876,7 +877,6 @@ var game = new function () {
 			});
 		}
 		
-		console.log('alet');
 		me.sounds['kc-move'].loop(true);
 		me.sounds['kc-move'].play();
 		me.sounds['kc-move'].pause();
