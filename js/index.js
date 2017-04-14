@@ -43,6 +43,7 @@ var maze = new function () {
 	
 	
 	me.el = gid('maze');
+	me.playersEl = gid('players');
 	
 	
 	me.dirs = ['s', 'e', 'w', 'n'];
@@ -102,7 +103,17 @@ var maze = new function () {
 	}
 	
 	me.putInCell = function(el, x, y) {
-		me.getCell(x,y).appendChild(el);
+		var
+			cellEl = me.getCell(x,y);
+		
+		el.style.top = cellEl.offsetTop + 'px';
+		el.style.left = cellEl.offsetLeft + 'px';
+		
+		if (el.parentNode !== me.playersEl) {
+			me.playersEl.appendChild(el);
+		}
+		
+		
 	}
 	
 	
@@ -802,7 +813,7 @@ var game = new function () {
 					}
 				}
 			}
-			requestAnimationFrame(detectCollisions);
+			//requestAnimationFrame(detectCollisions);
 	}
 	
 	
@@ -856,12 +867,12 @@ var game = new function () {
 	me.start = function () {
 		maze.make(9, 7);
 		createDots();
-		createKC();
+		//createKC();
 		createDen();
 		createMunchers();
 		me.dotSpeed = 3000;
 		me.setState('');
-		collisionInterval = requestAnimationFrame(detectCollisions, 100);
+		collisionInterval = setTimeout(detectCollisions, 100);
 	}
 	
 	function initSounds() {
