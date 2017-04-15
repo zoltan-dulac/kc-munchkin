@@ -105,6 +105,14 @@ var maze = new function () {
 		me.getCell(x,y).appendChild(el);
 	}
 	
+	function toArray(obj) {
+		var array = [];
+		// iterate backwards ensuring that length is an UInt32
+		for (var i = obj.length >>> 0; i--;) { 
+			array[i] = obj[i];
+		}
+		return array;
+	}
 	
 	function removeRandomWall(x, y, cell) {
 		var bannedDirs = [],
@@ -117,22 +125,38 @@ var maze = new function () {
 			bannedDirs.push('e');
 		}
 		
-		if (y === 1 ) {
+		if (y === 1) {
 			bannedDirs.push('n');
 		} else if ( y === me.height) {
 			bannedDirs.push('s');
 		}
 		
-		var openDirs = bannedDirs.concat(cell.classList);
+		// openDirs == bannedDirs + the dirs that don't have walls
+		var openDirs = bannedDirs.concat(toArray(cell.classList));
 		
+		// make possibleDirs = the ones that have walls.
 		for (i=0; i<openDirs.length; i++) {
 			possibleDirs.remove(openDirs[i]);
 		}
 		
-		for (i=0; i<possibleDirs.length; i++) {
-			me.setWall(x, y, possibleDirs[i], 'remove');
+		
+		if (possibleDirs.length > 1) {
+			var openDirsLength = openDirs.length;
+			var wallToRemove = possibleDirs[game.randInt(0, openDirsLength - 1)];
+			console.log(possibleDirs, wallToRemove);
+			me.setWall(x, y, wallToRemove, 'remove');
+		} else {
+			me.setWall(x, y, possibleDirs[0], 'remove');
 		}
 		
+		/*
+		 * Keeping this old way that removes too many walls around becuase it
+		 * may be useful later on.
+		 */
+		/* for (i=0; i<possibleDirs.length; i++) {
+			me.setWall(x, y, possibleDirs[i], 'remove');
+		}
+		*/
 	}
 	
 	function removeDeadEnds() {
@@ -578,6 +602,7 @@ var game = new function () {
 	var me = this,
 		score = 0,
 		highScore = 0,
+		lives = 0,
 		scoreEl = document.getElementById('score'),
 		highScoreEl = document.getElementById('high-score'),
 		dotSpeedEl = document.getElementById('dot-speed'),
