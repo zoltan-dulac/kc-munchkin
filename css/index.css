@@ -1,5 +1,5 @@
 @import "../fonts/PressStart2P/stylesheet.css";
-
+@import "../fonts/johnny-fever/stylesheet.css";
 /*
  * 92vmin is the height of the maze.
  */
@@ -56,7 +56,7 @@ body {
 	
 }
 
-table {
+#maze {
 	width: calc(92vmin * 9 / 7);
 	height: 92vmin;
 	transform: translateZ(0);
@@ -137,7 +137,7 @@ td.s.w::after {
  * moving objects
  */
 
-td > * {
+.player {
 	width: calc(92vmin / 9 );
 	height: calc(92vmin / 9 );
 	position: absolute;
@@ -152,11 +152,11 @@ td > * {
 	/* transition: transform linear 250ms; */
 }
 
-td > .paused {
+.player.paused {
 	animation-play-state: paused;
 }
 
-td > *:before {
+.player:before {
 	content: "";
 	position: absolute;
 	left: 0;
@@ -169,7 +169,7 @@ td > *:before {
 	background-repeat: no-repeat;
 }
 
-td > *:after {
+.player:after {
 	content: "";
 	position: absolute;
 	z-index: 0;
@@ -183,24 +183,24 @@ td > *:after {
 }
 
 /* Moving */
-td > .w {
+.player.w {
 	animation: go-west linear 500ms;
 }
 
 
-td > .e {
+.player.e {
 	animation: go-east linear 500ms;
 }
 
-td > .n {
+.player.n {
 	animation: go-north linear 500ms;
 }
 
-td > .s {
+.player.s {
 	animation: go-south linear 500ms;
 }
 
-td > .dot {
+.player.dot {
 	z-index: 10;
 	/* transition: transform linear 1000ms; */
 }
@@ -329,9 +329,89 @@ td > .dot {
 	
 }
 
+
+
+/*
+ * Styles for demo
+ */
+.demo-mode #maze,
+.demo-mode .stats {
+	display: none;
+}
+
+.slide {
+	text-align: center;
+	padding: 10vmin;
+	line-height: 4;
+	font-size: 3vmin;
+	white-space: nowrap;
+}
+
+.logo-container {
+	margin-top: -20vmin;
+	height: 77vh;
+}
+
+#slide1-3, #slide1-4 {
+	position: absolute;
+	width: 100%;
+}
+
+#slide1-3 {
+	top: 50vmin;
+}
+
+#slide1-4{
+	top: 35vmin;
+}
+
+.slide .kc {
+	position: relative;
+}
+
+.slide .kc.e {
+	animation: go-east-demo linear 4000ms;
+}
+
+.kc-munchkin-logo {
+	font-family: 'JohnnyFever-Regular';
+	line-height: 1;
+	font-size: 15vmin;
+	height: 15vmin;
+	width: 100%;
+	transform: perspective(200px) scaleY(1.5) rotateX(-25deg) translateY(100vh);
+	opacity: 0;
+	transition: opacity 1500ms linear, transform 1500ms linear;
+	color: #D92A27;
+	margin-top: -0.1vmin;
+}
+
+.kc-munchkin-logo.animate {
+	opacity: 1;
+	transform: perspective(200px) scaleY(1.5) rotateX(-25deg) translateY(0vh);
+}
+
+.white-gradient {
+	position: relative;
+}
+.white-gradient:after {
+	content: '';
+	display: block;
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 100%;
+	width: 100%;
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#00ffffff',GradientType=0 );
+	
+	background: linear-gradient(0deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 60%);
+}
+
+
 @media screen and (orientation:portrait) {
-	table {
+	#maze {
 		transform: translateZ(0) rotate(90deg) translateY(-100vw);
+		position: relative;
 	}
 }
 
@@ -375,6 +455,11 @@ td > .dot {
 
 @keyframes go-south {
 	100% { 	transform: translate3d(0, calc(120vmin / 9), 0); }
+}
+
+@keyframes go-east-demo {
+	0% { transform: translate3d(-60vw, 0, 0); }
+	100% { transform: translate3d(0, 0, 0); }
 }
 
 

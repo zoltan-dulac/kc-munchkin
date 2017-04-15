@@ -165,7 +165,7 @@ var maze = new function () {
 			for (j=1; j <= me.height; j++) {
 				var cell = me.getCell(i, j),
 					classList = cell.classList;
-				if (classList.length <  2) {
+				if (classList.length <	2) {
 					removeRandomWall(i, j, cell);
 					
 				}
@@ -297,7 +297,7 @@ var Dot = function(x, y, classes) {
 	
 	function init() {
 		me.el = ce('div');
-		me.el.className = 'dot ' + (classes || '');
+		me.el.className = `dot ${(classes || '')} player`;
 		maze.putInCell(me.el, x, y);
 		me.el.addEventListener('animationend', animationendHandler);
 		setTimeout(go, 1);
@@ -312,7 +312,7 @@ var Dot = function(x, y, classes) {
 
 
 /*
- *  KC
+ *	KC
  */
 
 var KC = function(x, y) {
@@ -469,7 +469,7 @@ var KC = function(x, y) {
 	
 	function init() {
 		me.el = ce('div');
-		me.el.className = 'kc';
+		me.el.className = 'kc player';
 		maze.putInCell(me.el, x, y);
 		
 		document.addEventListener('keydown', move);
@@ -586,7 +586,7 @@ var Muncher = function (x, y, dir, speed, index) {
 		me.el.__player = me;
 		
 		me.el.addEventListener('animationend', animationendHandler);
-		me.el.className = 'muncher muncher-'+ index;
+		me.el.className = `muncher muncher-${index} player`;
 		
 		me.el.style.animationDuration = me.speed + 'ms';
 		maze.putInCell(me.el, x, y);
@@ -596,6 +596,72 @@ var Muncher = function (x, y, dir, speed, index) {
 	
 	
 	init();
+}
+
+var demo = new function () {
+	var me = this,
+		bodyEl = document.body,
+		demoEl = document.getElementById('demo'),
+		logoEl,
+		kcDemoEl;
+	
+	me.start = function () {
+		document.addEventListener('keydown', game.start);
+		bodyEl.className = 'demo-mode';
+		slide1();
+	}
+	
+	function slide1() {
+		demoEl.innerHTML = `
+			<div id="slide1-1" class="slide" demo-text"></div>
+			<div id="slide-1" class="slide pixelate logo-container">
+				<div id="slide1-2" class="kc-munchkin-logo white-gradient">
+					K.C. Munchkin
+				</div>
+			</div>
+			<div id="slide1-3" class="slide"></div>
+			<div id="slide1-4" class="slide">
+				<div id="kc-demo" class="kc player move e"></div>
+			</div>
+		`;
+		me.showLetterByLetter(document.getElementById('slide1-1'), 'Useragentman presents', 0, 100, slide1a);
+		
+		kcDemoEl = document.getElementById('kc-demo');
+		kcDemoEl.addEventListener('animationend', stopKC);
+	}
+	
+	function slide1a() {
+		logoEl = document.getElementById('slide1-2');
+		logoEl.addEventListener('transitionend', slide1b);
+		logoEl.className += ' animate';
+	}
+	
+	function slide1b(e) {
+		
+		if (e.propertyName === 'opacity') {
+			me.showLetterByLetter(document.getElementById('slide1-3'), "Press Any Key To Start", 0, 100);
+		}
+		
+	}
+	
+	function stopKC(e) {
+		kcDemoEl.classList.remove('move', 'e');
+	}
+	
+	me.stop = function () {
+		demoEl.innerHTML = '';
+		bodyEl.className = '';
+		document.removeEventListener('keydown', game.start);
+	}
+	
+	me.showLetterByLetter = function (targetEl, message, index, interval, callback) {		
+		if (index < message.length) { 
+			targetEl.innerHTML += `<span class="char-${index}">${message[index++]}</span>`; 
+			setTimeout(function () { me.showLetterByLetter(targetEl, message, index, interval, callback); }, interval); 
+		} else if (callback){
+			callback();
+		}
+	}
 }
 
 var game = new function () {
@@ -625,7 +691,7 @@ var game = new function () {
 		'dotSpeed',
 		{
 			set: function (n) {
-				dotSpeedEl.innerHTML = 'td > .dot {	animation-duration: ' + n + 'ms;}';
+				dotSpeedEl.innerHTML = `.player.dot {	animation-duration: ${n}ms;}`;
 				dotSpeed = n;
 			},
 			
@@ -729,7 +795,7 @@ var game = new function () {
 		var i;
 		
 		for (i=0; i<me.munchers.length; i++) {
-			me.munchers[i] = new Muncher(5 , 5, 'n', 250 + 100 * i, i);
+			me.munchers[i] = new Muncher(5 , 5, 'n', 350 + 100 * i, i);
 		}
 		
 	}
@@ -920,6 +986,7 @@ var game = new function () {
 	
 	
 	me.start = function () {
+		demo.stop();
 		maze.make(9, 7);
 		createDots();
 		createKC();
@@ -938,8 +1005,8 @@ var game = new function () {
 			var file = soundFiles[i];
 			me.sounds[file] =new Howl({
 				autoplay: (i === 'kc-move'),
-			  src: ['sounds/' + file + '.wav'],
-			  loop: (i === 'kc-move')
+				src: ['sounds/' + file + '.wav'],
+				loop: (i === 'kc-move')
 			});
 		}
 		
@@ -952,7 +1019,8 @@ var game = new function () {
 	me.init = function () {
 		bonusDisplayEl.addEventListener('animationend', bonusDisplayAnimationEnd);
 		initSounds();
-		me.start();
+		demo.start();
+		//me.start();
 	}
 	
 	

@@ -20,6 +20,13 @@
 
 		<link rel="stylesheet" href="css/index.css" type="text/css" />
 		
+		<style>
+			.pixelate {
+				
+				/* From https://codepen.io/tigt/pen/akYqAg */
+				filter: url(#pixelate);
+			}
+		</style>
 		<style id="dot-speed"></style>
 		
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.0.3/howler.min.js"></script>
@@ -27,7 +34,23 @@
 	</head>
 
 	<body>
-		<table id='maze'></table>
+		<svg width="0" height="0">
+			<filter id="pixelate" x="0" y="0">
+				<feFlood x="2" y="2" height="2" width="2"/>
+				
+				<feComposite width="5" height="5"/>
+				
+				<feTile result="a"/>
+				
+				<feComposite in="SourceGraphic" in2="a" operator="in"/>
+				
+				<feMorphology operator="dilate" radius="2.5"/>
+			</filter>
+			
+		</svg>
+		
+		<table id="maze"></table>
+		<div id="demo"></div>
 		<section class="stats">
 			<div id="score-wrap">1UP: <span id="score">0</span> <span id="lives"><span class="kc-life"></span></span></div>
 			<div id="high-score-wrap">High: <span id="high-score"></span></div>
