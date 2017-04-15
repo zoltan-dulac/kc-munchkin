@@ -41,6 +41,11 @@ td {
 	white-space: nowrap;
 	position: relative;
 }
+
+td:before {
+	content: "";
+}
+
 td.s {
 	border-bottom: none;
 }
@@ -56,6 +61,38 @@ td.e {
 td.v {
 	background: skyblue
 }
+
+td.n.e::before,
+td.n.w::before,
+td.s.e::after,
+td.s.w::after {
+	width: 1.2vmin;
+	height: 1.2vmin;
+	background: blue;
+	display: block;
+	position: absolute;
+}
+
+td.n.e::before,
+td.n.w::before {
+	top: -0.7vmin;
+}
+	
+td.s.e::after,
+td.s.w::after {
+	bottom: -0.7vmin;
+}
+	
+td.n.e::before,
+td.s.e::after {
+	right: -0.7vmin;
+}
+
+td.n.w::before,
+td.s.w::after {
+	left: -0.7vmin;
+}
+
 
 /*
  * moving objects

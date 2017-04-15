@@ -141,7 +141,7 @@ var maze = new function () {
 			for (j=1; j <= me.height; j++) {
 				var cell = me.getCell(i, j),
 					classList = cell.classList;
-				if (classList.length < 2) {
+				if (classList.length <  2) {
 					removeRandomWall(i, j, cell);
 					
 				}
@@ -303,6 +303,13 @@ var KC = function(x, y) {
 	me.dir = null;
 	me.el = null;
 	
+	angleKeyMapping = [];
+	angleKeyMapping[360] = 'ArrowRight';
+	angleKeyMapping[0] = 'ArrowRight';
+	angleKeyMapping[90] = 'ArrowUp';
+	angleKeyMapping[180] = 'ArrowLeft';
+	angleKeyMapping[270] = 'ArrowDown';
+	
 	function playSound() {
 		if (!isSoundPlaying) {
 			game.sounds['kc-move'].play();
@@ -314,10 +321,34 @@ var KC = function(x, y) {
 		game.sounds['kc-move'].pause();
 		isSoundPlaying = false;
 	}
+	
+	function swipeEvent(e) {
+		var data = e.detail.data[0],
+			dir = data.currentDirection;
+		
+		if ((0 <= dir && dir<= 45) || (315 <= dir && dir <= 360)) {
+			moveHelper(e, 'ArrowRight');
+		} else if (46 <= dir && dir <= 135) {
+			moveHelper(e, 'ArrowUp');
+		} else if (136 <= dir && dir <= 225) {
+			moveHelper(e, 'ArrowLeft');
+		} else {
+			moveHelper(e, 'ArrowDown');
+		}
+		
+		console.log(dir, data.currentDirection	);
+		if (dir) {
+			moveHelper(e, dir);
+		}
+	}
 
 	function move(e) {
+		moveHelper(e, e.key);
+	}
+	
+	function moveHelper(e, key) {
 		//me.el.style.animationPlayState=''; //me.el.classList.remove('paused');
-		switch (e.key) {
+		switch (key) {
 			case "ArrowDown":
 				lastCmd = 's';
 				e.preventDefault();
@@ -401,12 +432,16 @@ var KC = function(x, y) {
 	
 	function stop(e) {
 		e.preventDefault();
-		//game.sounds['kc-move'].stop();
-		//lastCmd = '';
+		/* me.el.classList.remove('move', 'n', 's', 'e', 'w');	
+		game.sounds['kc-move'].stop();
+		lastCmd = ''; */
 		//me.el.style.animationPlayState='paused'; //classList.add('paused');
 	}
 	
-	
+	function initGestures() {
+		var activeRegion = ZingTouch.Region(document.body);
+		activeRegion.bind(maze.el, 'swipe', swipeEvent)
+	}
 	
 	function init() {
 		me.el = ce('div');
@@ -415,6 +450,7 @@ var KC = function(x, y) {
 		
 		document.addEventListener('keydown', move);
 		document.addEventListener('keyup', stop);
+		initGestures();
 		me.el.addEventListener('animationend', animationendHandler);
 	}
 	
@@ -764,20 +800,25 @@ var game = new function () {
 				objOnTop = whatIsOnTopOf(me.kc),
 				playerOnTop = objOnTop.__player,
 				i;
-				
-			if (objOnTop !== me.kc.el) {
-				if (me.canEatMunchers) { 
-					if (!playerOnTop.isEaten()) {
-						playerOnTop.die();
-						munchersEaten++;
-						me.setScore(Math.pow(2, munchersEaten) * 100, true, true);
-					}
-				} else if (!playerOnTop.isEaten()){
-					me.kc.die();
-					if (score > highScore) {
-						setHighScore(score);
-					}
-				};
+			
+			/*
+			 * Only if playerOnTop is a muncher.
+			 */
+			if (playerOnTop) {
+				if (objOnTop !== me.kc.el) {
+					if (me.canEatMunchers) { 
+						if (!playerOnTop.isEaten()) {
+							playerOnTop.die();
+							munchersEaten++;
+							me.setScore(Math.pow(2, munchersEaten) * 100, true, true);
+						}
+					} else if (!playerOnTop.isEaten()){
+						me.kc.die();
+						if (score > highScore) {
+							setHighScore(score);
+						}
+					};
+				}
 			}
 			
 			for (i=0; i<me.dots.length; i++) {
