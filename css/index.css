@@ -13,6 +13,11 @@ body {
 	text-transform: uppercase;
 }
 
+.sup {
+	top: -2.1vmin;
+	position: relative;
+}
+
 * {
 	box-sizing: border-box;
 }
@@ -341,7 +346,7 @@ td.s.w::after {
 
 .slide {
 	text-align: center;
-	padding: 10vmin;
+	padding-top: 20vmin;
 	line-height: 4;
 	font-size: 3vmin;
 	white-space: nowrap;
@@ -407,13 +412,14 @@ td.s.w::after {
 	background: linear-gradient(0deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 60%);
 }
 
-
-@media screen and (orientation:portrait) {
+/* @media screen and (orientation:portrait) {
 	#maze {
 		transform: translateZ(0) rotate(90deg) translateY(-100vw);
 		position: relative;
 	}
-}
+} */
+
+
 
 
 @keyframes kc-die {
@@ -491,3 +497,59 @@ td.s.w::after {
 	}
 }
 
+/* 1.1923076923076923 = 31 / 26 */
+/* 1.1828571428 = 828 / 7 */
+
+@media screen and (max-aspect-ratio: 31 / 26) {
+	
+	.stats {
+		width: 100vw;
+		top: 0.8vw;
+		left: 0;
+		margin-left: 0;
+		height: 4vw;
+		font-size: 4vw;
+	}
+	
+	
+	.kc-life {
+		width: 4vw;
+		height: 4vw;
+		background-size: 4vw 4vw;
+	}
+	
+	#maze {
+		width: 100vw;
+		height: 77vw;
+		top: 5vw;
+		bottom: auto;
+		left: 0;
+		right: autp;
+		margin-left: 0;
+	}
+	
+	.player {
+		width: calc(92vw / 9 );
+		height: calc(92vw / 9 );
+		top: 1.5vw;
+		left: 0vw;
+	}
+	
+	@keyframes go-west {
+		100% { transform: translate3d(calc(-110vw / 9), 0, 0); }
+	}
+	
+	@keyframes go-east {
+		100% { transform: translate3d(calc(110vw / 9), 0, 0); }
+	}
+	
+	@keyframes go-north {
+		100% { 	transform: translate3d(0, calc(-110vw / 9), 0); }
+	}
+	
+	@keyframes go-south {
+		100% { 	transform: translate3d(0, calc(110vw / 9), 0); }
+	}
+	
+
+}

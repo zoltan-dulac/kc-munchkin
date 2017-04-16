@@ -50,6 +50,9 @@ var maze = new function () {
 	function gid(e) { return document.getElementById(e); }
 	function irand(x) { return Math.floor(Math.random() * x); }
 	
+	/*
+	 * Remember, cells are indexed starting at 1, not 0.
+	 */
 	me.getCell = function(x, y) {
 		if (0 < x && x <= me.width && 0 < y && y <= me.height) {
 			return me.el.kid(y).kid(x);
@@ -114,7 +117,7 @@ var maze = new function () {
 		return array;
 	}
 	
-	function removeRandomWall(x, y, cell) {
+	function removeRandomWallInCell(x, y, cell) {
 		var bannedDirs = [],
 			possibleDirs = me.dirs.slice(0),
 			i;
@@ -143,7 +146,6 @@ var maze = new function () {
 		if (possibleDirs.length > 1) {
 			var openDirsLength = openDirs.length;
 			var wallToRemove = possibleDirs[game.randInt(0, openDirsLength - 1)];
-			console.log(possibleDirs, wallToRemove);
 			me.setWall(x, y, wallToRemove, 'remove');
 		} else {
 			me.setWall(x, y, possibleDirs[0], 'remove');
@@ -166,8 +168,51 @@ var maze = new function () {
 				var cell = me.getCell(i, j),
 					classList = cell.classList;
 				if (classList.length <	2) {
-					removeRandomWall(i, j, cell);
+					removeRandomWallInCell(i, j, cell);
 					
+				}
+			}
+		}
+	}
+	
+	function removeThreeInARow() {
+		console.log('v');
+		var i, j, wallCounter;
+		for (i=2; i <= me.width; i++) {
+			wallCounter = 0;
+			for (j=1; j <= me.height; j++) {
+				var cell = me.getCell(i, j),
+					classList = cell.classList;
+				if (!classList.contains('w')) {
+					wallCounter++;
+				} else {
+					wallCounter = 0;
+				}
+				
+				if (wallCounter === 3) {
+					console.log(i, j);
+					me.setWall(i, j, 'w', 'remove');
+					wallCounter = 0;
+				}
+			}
+		}
+		console.log('h')
+		wallCounter = 0;
+		for (j=2; j <= me.height; j++) {
+			wallCounter = 0;
+			for (i=1; i <= me.width; i++) {
+				var cell = me.getCell(i, j),
+					classList = cell.classList;
+				if (!classList.contains('n')) {
+					wallCounter++;
+				} else {
+					wallCounter = 0;
+				}
+				
+				if (wallCounter === 3) {
+					console.log(i, j);
+					me.setWall(i, j, 'n', 'remove');
+					wallCounter = 0;
 				}
 			}
 		}
@@ -215,6 +260,7 @@ var maze = new function () {
 		close_maze();
 		
 		removeDeadEnds();
+		removeThreeInARow();
 	};
 	
 	function close_maze() {
@@ -483,7 +529,7 @@ var KC = function(x, y) {
 
 var MuncherDen = function (x, y) {
 	var me = this,
-		dirs = ['n', 'e', 's', 'w'],
+		dirs = ['s', 'w', 'n', 'e'],
 		openDir = dirs[0],
 		timeout = null;
 		
@@ -606,9 +652,16 @@ var demo = new function () {
 		kcDemoEl;
 	
 	me.start = function () {
-		document.addEventListener('keydown', game.start);
+		document.addEventListener('keydown', keyDownEvent);
 		bodyEl.className = 'demo-mode';
 		slide1();
+	}
+	
+	function keyDownEvent(e) {
+		if (e.key === ' ') {
+			e.preventDefault();
+			game.start(e);
+		}
 	}
 	
 	function slide1() {
@@ -616,7 +669,7 @@ var demo = new function () {
 			<div id="slide1-1" class="slide" demo-text"></div>
 			<div id="slide-1" class="slide pixelate logo-container">
 				<div id="slide1-2" class="kc-munchkin-logo white-gradient">
-					K.C. Munchkin
+					K.C. Munchkin<span class="sup">²</span>
 				</div>
 			</div>
 			<div id="slide1-3" class="slide"></div>
@@ -639,7 +692,7 @@ var demo = new function () {
 	function slide1b(e) {
 		
 		if (e.propertyName === 'opacity') {
-			me.showLetterByLetter(document.getElementById('slide1-3'), "Press Any Key To Start", 0, 100);
+			me.showLetterByLetter(document.getElementById('slide1-3'), "Press Space To Start", 0, 100);
 		}
 		
 	}
@@ -651,7 +704,7 @@ var demo = new function () {
 	me.stop = function () {
 		demoEl.innerHTML = '';
 		bodyEl.className = '';
-		document.removeEventListener('keydown', game.start);
+		document.removeEventListener('keydown', keyDownEvent);
 	}
 	
 	me.showLetterByLetter = function (targetEl, message, index, interval, callback) {		
@@ -784,7 +837,7 @@ var game = new function () {
 	}
 	
 	function createKC() {
-		me.kc = new KC(5, 6);
+		me.kc = new KC(5, 4);
 	}
 	
 	function createDen() {
@@ -1020,7 +1073,6 @@ var game = new function () {
 		bonusDisplayEl.addEventListener('animationend', bonusDisplayAnimationEnd);
 		initSounds();
 		demo.start();
-		//me.start();
 	}
 	
 	
