@@ -4,6 +4,10 @@
  * 92vmin is the height of the maze.
  */
 
+html, body {
+	height: 101vh;
+}
+
 body {
 	background: black;
 	color: white;
@@ -407,20 +411,8 @@ td.s.w::after {
 	left: 0;
 	height: 100%;
 	width: 100%;
-	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#00ffffff',GradientType=0 );
-	
 	background: linear-gradient(0deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 60%);
 }
-
-/* @media screen and (orientation:portrait) {
-	#maze {
-		transform: translateZ(0) rotate(90deg) translateY(-100vw);
-		position: relative;
-	}
-} */
-
-
-
 
 @keyframes kc-die {
 	100% { background-position: calc(-92vmin / 9 * 8) }
@@ -496,9 +488,6 @@ td.s.w::after {
 		filter: hue-rotate(360deg);
 	}
 }
-
-/* 1.1923076923076923 = 31 / 26 */
-/* 1.1828571428 = 828 / 7 */
 
 @media screen and (max-aspect-ratio: 31 / 26) {
 	

@@ -652,15 +652,19 @@ var demo = new function () {
 		kcDemoEl;
 	
 	me.start = function () {
-		document.addEventListener('keydown', keyDownEvent);
+		document.addEventListener('keydown', keyDownClickEvent);
+		document.addEventListener('click', keyDownClickEvent);
+		document.addEventListener('touchstart', keyDownClickEvent);
 		bodyEl.className = 'demo-mode';
 		slide1();
 	}
 	
-	function keyDownEvent(e) {
-		if (e.key === ' ') {
+	function keyDownClickEvent(e) {
+		if (e.key === ' ' || e.type === 'click') {
 			e.preventDefault();
+			
 			game.start(e);
+			
 		}
 	}
 	
@@ -704,7 +708,9 @@ var demo = new function () {
 	me.stop = function () {
 		demoEl.innerHTML = '';
 		bodyEl.className = '';
-		document.removeEventListener('keydown', keyDownEvent);
+		document.removeEventListener('keydown', keyDownClickEvent);
+		document.removeEventListener('click', keyDownClickEvent);
+		document.removeEventListener('touchstart', keyDownClickEvent);
 	}
 	
 	me.showLetterByLetter = function (targetEl, message, index, interval, callback) {		
@@ -1070,6 +1076,7 @@ var game = new function () {
 	}
 	
 	me.init = function () {
+		window.scrollTo(0, 1);
 		bonusDisplayEl.addEventListener('animationend', bonusDisplayAnimationEnd);
 		initSounds();
 		demo.start();
