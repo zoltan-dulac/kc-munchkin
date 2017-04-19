@@ -62,7 +62,23 @@ body {
 	background-repeat: no-repeat;
 	image-rendering: -moz-crisp-edges;
 	image-rendering: pixelated;
-	
+	margin-left: 0.5vmin;
+}
+
+#overlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	text-align: center;
+	width: 100vw;
+	height: 100vh;
+	display: block;
+	line-height: 100vh;
+	font-size: 3vmin;
+}
+
+#overlay.hidden {
+	display: none;
 }
 
 #maze {

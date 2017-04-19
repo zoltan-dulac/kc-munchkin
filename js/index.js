@@ -229,11 +229,15 @@ var maze = new function () {
 			cellInDir.classList[classListOp](game.oppositeDir(dir));
 		}
 	}
+	
+	me.clear = function () {
+		me.el.innerHTML = '';
+	}
 	 
 	me.make = function (w, h) {
 		me.width = w;
 		me.height = h;
-		me.el.innerHTML = '';
+		me.clear();
 		me.el.add('tr', h);
 		me.el.childNodes.map(function(x) {
 				x.add('th', 1);
@@ -497,7 +501,17 @@ var KC = function(x, y) {
 		me.el.classList.remove('die');
 		me.el.classList.add('dead');
 		
-		setTimeout(game.reset, 1);
+		game.lives --;
+		if (game.lives === 0) {
+			game.showGameOver();
+		} else {
+			setTimeout(
+				function() {
+					game.reset(true)
+				}, 
+			1);
+		}
+		
 	}
 	
 	function stop(e) {
@@ -716,7 +730,15 @@ var demo = new function () {
 	me.showLetterByLetter = function (targetEl, message, index, interval, callback) {		
 		if (index < message.length) { 
 			targetEl.innerHTML += `<span class="char-${index}">${message[index++]}</span>`; 
-			setTimeout(function () { me.showLetterByLetter(targetEl, message, index, interval, callback); }, interval); 
+			setTimeout(
+				function () {
+					requestAnimationFrame(
+						function () {
+							me.showLetterByLetter(targetEl, message, index, interval, callback);
+						}
+					)
+				}, interval
+			); 
 		} else if (callback){
 			callback();
 		}
@@ -731,6 +753,8 @@ var game = new function () {
 		scoreEl = document.getElementById('score'),
 		highScoreEl = document.getElementById('high-score'),
 		dotSpeedEl = document.getElementById('dot-speed'),
+		overlayEl = document.getElementById('overlay'),
+		livesEl = document.getElementById('lives'),
 		dotSpeed,
 		collisionInterval,
 		stateTimeout,
@@ -744,6 +768,7 @@ var game = new function () {
 	me.dotSpeed;
 	me.canEatMunchers = false,
 	me.sounds = {};
+	me.lives = 3;
 	
 	Object.defineProperty(
 		me, 
@@ -776,7 +801,7 @@ var game = new function () {
 	}
 		
 	me.randInt = function (min, max) {
-	return Math.floor(Math.random() * (max - min + 1)) + min;
+		return Math.floor(Math.random() * (max - min + 1)) + min;
 	}
 	
 	me.setScore = function (n, doIncrease, isBonus) {
@@ -786,6 +811,14 @@ var game = new function () {
 		if (isBonus) {
 			var box = me.kc.el.getBoundingClientRect();
 			setBonusDisplay(box.left, box.top, n);
+		}
+	}
+	
+	function setLives () {
+		livesEl.innerHTML = '';
+		var i;
+		for (i=1; i<=me.lives; i++) {
+			livesEl.innerHTML += '<span class="kc-life"></span>';
 		}
 	}
 	
@@ -812,7 +845,7 @@ var game = new function () {
 			me.setScore(0);
 		}
 		game.sounds['kc-move'].pause();
-		me.start();
+		me.reincarnate();
 	};
 	
 	me.oppositeDir = function(dir) {
@@ -1043,14 +1076,46 @@ var game = new function () {
 		}
 	}
 	
-	
 	me.start = function () {
+		me.lives = 3;
+		me.reincarnate();
+	}
+	
+	me.reincarnate = function () {
+		maze.clear();
 		demo.stop();
+		showIntro(startLevel);
+	}
+	
+	function showIntro(callback) {
+		overlayEl.className = '';
+		demo.showLetterByLetter(overlayEl, 'Ready Player 1', 0, 100, function () {
+			setTimeout(function () {
+				overlayEl.innerHTML = '';
+				overlayEl.className = 'hidden';
+				callback();
+			}, 1000);
+		});
+	}
+	
+	me.showGameOver = function () {
+		overlay.className = '';
+		demo.showLetterByLetter(overlayEl, 'Game Over', 0, 100, function () {
+			setTimeout(function () {
+				overlayEl.innerHTML = '';
+				overlayEl.className = 'hidden';
+				demo.start();
+			}, 3000);
+		});
+	}
+	
+	function startLevel() {
 		maze.make(9, 7);
 		createDots();
 		createKC();
 		createDen();
 		createMunchers();
+		setLives();
 		me.dotSpeed = 3000;
 		me.setState('');
 		collisionInterval = requestAnimationFrame(detectCollisions, 100);
@@ -1062,7 +1127,7 @@ var game = new function () {
 			
 		for (var i=0; i<soundFiles.length; i++) {
 			var file = soundFiles[i];
-			me.sounds[file] =new Howl({
+			me.sounds[file] = new Howl({
 				autoplay: (i === 'kc-move'),
 				src: ['sounds/' + file + '.wav'],
 				loop: (i === 'kc-move')
