@@ -1,3 +1,98 @@
+/**
+ * Basic priority queue implementation. If a better priority queue is wanted/needed,
+ * this code works with the implementation in google's closure library (https://code.google.com/p/closure-library/).
+ * Use goog.require('goog.structs.PriorityQueue'); and new goog.structs.PriorityQueue()
+ * 
+ * Code from https://github.com/mburst/dijkstras-algorithm
+ */
+function PriorityQueue () {
+  this._nodes = [];
+
+  this.enqueue = function (priority, key) {
+    this._nodes.push({key: key, priority: priority });
+    this.sort();
+  };
+  this.dequeue = function () {
+    return this._nodes.shift().key;
+  };
+  this.sort = function () {
+    this._nodes.sort(function (a, b) {
+      return a.priority - b.priority;
+    });
+  };
+  this.isEmpty = function () {
+    return !this._nodes.length;
+  };
+}
+
+/**
+ * Dijkstra's algorithm pathfinding starts here.
+ * 
+ * Code from https://github.com/mburst/dijkstras-algorithm
+ */
+function Graph(){
+  var INFINITY = 1/0;
+  this.vertices = {};
+
+  this.addVertex = function(name, edges){
+    this.vertices[name] = edges;
+  };
+
+  this.shortestPath = function (start, finish) {
+    var nodes = new PriorityQueue(),
+        distances = {},
+        previous = {},
+        path = [],
+        smallest, vertex, neighbor, alt;
+
+    for(vertex in this.vertices) {
+      if(vertex === start) {
+        distances[vertex] = 0;
+        nodes.enqueue(0, vertex);
+      }
+      else {
+        distances[vertex] = INFINITY;
+        nodes.enqueue(INFINITY, vertex);
+      }
+
+      previous[vertex] = null;
+    }
+
+    while(!nodes.isEmpty()) {
+      smallest = nodes.dequeue();
+
+      if(smallest === finish) {
+        path = [];
+
+        while(previous[smallest]) {
+          path.push(smallest);
+          smallest = previous[smallest];
+        }
+
+        break;
+      }
+
+      if(!smallest || distances[smallest] === INFINITY){
+        continue;
+      }
+
+      for(neighbor in this.vertices[smallest]) {
+        alt = distances[smallest] + this.vertices[smallest][neighbor];
+
+        if(alt < distances[neighbor]) {
+          distances[neighbor] = alt;
+          previous[neighbor] = smallest;
+
+          nodes.enqueue(alt, neighbor);
+        }
+      }
+    }
+
+    return path;
+  };
+}
+
+
 /*
  * Graphics from: http://atariage.com/forums/topic/220324-kc-munchkin/page-3
  */
@@ -40,7 +135,9 @@ var maze = new function () {
 	
 	me.width = 0;
 	me.height = 0;
-	
+	me.denX = null;
+	me.denY = null;
+	me.graph = null;
 	
 	me.el = gid('maze');
 	
@@ -161,6 +258,20 @@ var maze = new function () {
 		*/
 	}
 	
+	function makePathAroundDen() {
+		var i;
+			
+		for (i=me.denX-1; i<=me.denX; i++) {
+			me.setWall(i, me.denY-1, 'e', 'remove');
+			me.setWall(i, me.denY+1, 'e', 'remove');
+		}
+		
+		for (i=me.denY-1; i<=me.denY; i++) {
+			me.setWall(me.denX-1, i, 's', 'remove');
+			me.setWall(me.denX+1, i, 's', 'remove');
+		}
+	}
+	
 	function removeDeadEnds() {
 		var i, j;
 		for (i=1; i <= me.width; i++) {
@@ -176,8 +287,8 @@ var maze = new function () {
 	}
 	
 	function removeThreeInARow() {
-		console.log('v');
 		var i, j, wallCounter;
+		
 		for (i=2; i <= me.width; i++) {
 			wallCounter = 0;
 			for (j=1; j <= me.height; j++) {
@@ -196,7 +307,7 @@ var maze = new function () {
 				}
 			}
 		}
-		console.log('h')
+		
 		wallCounter = 0;
 		for (j=2; j <= me.height; j++) {
 			wallCounter = 0;
@@ -234,9 +345,11 @@ var maze = new function () {
 		me.el.innerHTML = '';
 	}
 	 
-	me.make = function (w, h) {
+	me.make = function (w, h, denX, denY) {
 		me.width = w;
 		me.height = h;
+		me.denX = denX;
+		me.denY = denY;
 		me.clear();
 		me.el.add('tr', h);
 		me.el.childNodes.map(function(x) {
@@ -263,9 +376,46 @@ var maze = new function () {
 		//Now, we must close up the maze
 		close_maze();
 		
+		makePathAroundDen();
 		removeDeadEnds();
 		removeThreeInARow();
+		generateGraph();
 	};
+	
+	function generateGraph() {
+		var i, j, k, edges, cell, cellClassList, dir;
+		
+		me.graph = new Graph();
+		
+		for (i = 1; i <= me.width; i++ ) {
+			for ( j = 1; j <= me.height; j++ ) {
+				edges = {};
+				cell = me.getCell(i, j);
+				cell.setAttribute('data-x', i);
+				cell.setAttribute('data-y', j);
+				
+				cellClassList = cell.classList;
+				if (cellClassList.contains('n')) {
+					edges[`${i}${j-1}`] = 1;
+				} 
+				
+				if (cellClassList.contains('s')) {
+					edges[`${i}${j+1}`] = 1;
+				}
+				
+				if (cellClassList.contains('w')) {
+					edges[`${i-1}${j}`] = 1;
+				}
+				
+				if (cellClassList.contains('e')) {
+					edges[`${i+1}${j}`] = 1;
+				}
+				
+				me.graph.addVertex(`${i}${j}`, edges)
+			}
+		}
+		
+	}
 	
 	function close_maze() {
 		var firstRow = me.el.kid(1),
@@ -502,6 +652,7 @@ var KC = function(x, y) {
 		me.el.classList.add('dead');
 		
 		game.lives --;
+		game.setLives();
 		if (game.lives === 0) {
 			game.showGameOver();
 		} else {
@@ -580,19 +731,26 @@ var MuncherDen = function (x, y) {
 	
 	init();
 }
-
-
+	
 var Muncher = function (x, y, dir, speed, index) {
 	var me = this,
 		dirs = ['n', 'e', 's', 'w'],
 		openDir = dirs[0],
 		el,
-		cellEl = maze.getCell(x, y);
+		cellEl = maze.getCell(x, y),
+		scatterY = [1, 5, 9],
+		modes = {
+			SCATTER: -1,
+			PURSUIT: 0,
+			FLEE: 1
+		};
 	
 	me.x = x;
 	me.y = y;
 	me.dir = dir;
 	me.speed = speed;
+	me.state = modes.SCATTER;
+	me.index = index;
 	
 	function animationendHandler(e) {
 		var cellInfo = maze.getCellInDir(me.x, me.y, me.dir);
@@ -618,7 +776,24 @@ var Muncher = function (x, y, dir, speed, index) {
 				y: game.den.y
 			}
 		} else {
-			aimCoord = null;
+			switch (me.state) {
+				case modes.SCATTER:
+					aimCoord = {
+						x: scatterY[me.index],
+						y: 1
+					}
+					break;
+				case modes.PURSUIT:
+					aimCoord = {
+						x: game.kc.x,
+						y: game.kc.y
+					}
+					break;
+				case 'FLEE':
+					aimCoord = null;
+					break;
+			}
+			
 		}
 		me.dir = game.setPlayerDir(me, cellEl, me.dir, aimCoord);
 	}
@@ -640,6 +815,12 @@ var Muncher = function (x, y, dir, speed, index) {
 		me.el.classList.remove('eaten');
 	}
 	
+	function changeMode() {
+		me.state = (me.state + 1) % 2;
+		console.log('mode now', me.state);
+		setTimeout(changeMode, 10000);
+	}
+	
 	function init() {
 		me.el = ce('div');
 		
@@ -651,6 +832,8 @@ var Muncher = function (x, y, dir, speed, index) {
 		me.el.style.animationDuration = me.speed + 'ms';
 		maze.putInCell(me.el, x, y);
 		setTimeout(go, 1);
+		
+		setTimeout(changeMode, 10000);
 		
 	}
 	
@@ -814,7 +997,7 @@ var game = new function () {
 		}
 	}
 	
-	function setLives () {
+	me.setLives = function() {
 		livesEl.innerHTML = '';
 		var i;
 		for (i=1; i<=me.lives; i++) {
@@ -945,15 +1128,22 @@ var game = new function () {
 	me.setPlayerDir = function (player, cellEl, currentDir, aimCoords) {
 		var
 			dir,
-			possibleDirs = cellEl.classList
+			possibleDirs = cellEl.classList,
 			numPossibleDirs = possibleDirs.length,
 			nextDirIndex = game.randInt(0, numPossibleDirs - 1),
-			nextDir = possibleDirs[nextDirIndex];
+			nextDir = possibleDirs[nextDirIndex],
+			path,
+			cellKey,
+			aimKey;
 			
 		if (numPossibleDirs > 1) {
 			if (aimCoords) {
-				var targetDirs = me.getTargetedDirs(player, aimCoords);
-				nextDir = targetDirs[me.randInt(0, targetDirs.length - 1)];
+				/* var targetDirs = me.getTargetedDirs(player, aimCoords);
+				nextDir = targetDirs[me.randInt(0, targetDirs.length - 1)]; */
+				cellKey = `${player.x}${player.y}`;
+				aimKey = `${aimCoords.x}${aimCoords.y}`;
+				path = maze.graph.shortestPath(cellKey, aimKey).reverse();
+				nextDir = whichDir(cellKey, path[0]); 
 			} else {
 				if (nextDir === game.oppositeDir(currentDir)) {
 					nextDirIndex = (nextDirIndex + 1) % numPossibleDirs;
@@ -966,6 +1156,21 @@ var game = new function () {
 		
 		player.el.classList.add(dir);
 		return dir;
+	}
+	
+	function whichDir(from, to) {
+		var fromArray = from.split(''),
+			toArray = to.split('');
+			
+		if (fromArray[0] > fromArray [1] ) {
+			return 'w';
+		} else if (fromArray[0] < fromArray[1]) {
+			return 'e';
+		} else if (toArray[0] > toArray[1]) {
+			return 'n';
+		} else {
+			return 's';
+		}
 	}
 	
 	function whatIsOnTopOf(obj) {
@@ -997,9 +1202,6 @@ var game = new function () {
 						}
 					} else if (!playerOnTop.isEaten()){
 						me.kc.die();
-						if (score > highScore) {
-							setHighScore(score);
-						}
 					};
 				}
 			}
@@ -1078,6 +1280,7 @@ var game = new function () {
 	
 	me.start = function () {
 		me.lives = 3;
+		me.setScore(0)
 		me.reincarnate();
 	}
 	
@@ -1099,9 +1302,13 @@ var game = new function () {
 	}
 	
 	me.showGameOver = function () {
+		me.setLives();
 		overlay.className = '';
 		demo.showLetterByLetter(overlayEl, 'Game Over', 0, 100, function () {
 			setTimeout(function () {
+				if (score > highScore) {
+					setHighScore(score);
+				}
 				overlayEl.innerHTML = '';
 				overlayEl.className = 'hidden';
 				demo.start();
@@ -1110,12 +1317,12 @@ var game = new function () {
 	}
 	
 	function startLevel() {
-		maze.make(9, 7);
+		maze.make(9, 7, 5, 5);
 		createDots();
 		createKC();
 		createDen();
 		createMunchers();
-		setLives();
+		me.setLives();
 		me.dotSpeed = 3000;
 		me.setState('');
 		collisionInterval = requestAnimationFrame(detectCollisions, 100);

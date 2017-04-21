@@ -359,8 +359,7 @@ td.s.w::after {
 /*
  * Styles for demo
  */
-.demo-mode #maze,
-.demo-mode .stats {
+.demo-mode #maze {
 	display: none;
 }
 
