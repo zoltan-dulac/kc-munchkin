@@ -743,7 +743,8 @@ var Muncher = function (x, y, dir, speed, index) {
 			SCATTER: -1,
 			PURSUIT: 0,
 			FLEE: 1
-		};
+		},
+		modeTimeout = null;
 	
 	me.x = x;
 	me.y = y;
@@ -769,19 +770,33 @@ var Muncher = function (x, y, dir, speed, index) {
 	}
 	
 	function go() {
-		var aimCoord;
+		var aimCoord,
+			ghostState = me.state;
 		if (me.isEaten()) {
 			aimCoord = {
 				x: game.den.x,
 				y: game.den.y
 			}
 		} else {
-			switch (me.state) {
+			if (maze.el.className !== '') {
+				ghostState = modes.FLEE;
+			} 
+			switch (ghostState) {
 				case modes.SCATTER:
 					aimCoord = {
 						x: scatterY[me.index],
-						y: 1
+						y: maze.height
 					}
+					
+					// if the muncher is on the aimed coord, then we will
+					// change the mode and make sure we go to the next case
+					if (me.x === aimCoord.x && me.y === aimCoord.y) {
+						me.state = modes.FLEE;
+					} else {
+						break;
+					}
+				case modes.FLEE:
+					aimCoord = null;
 					break;
 				case modes.PURSUIT:
 					aimCoord = {
@@ -789,11 +804,7 @@ var Muncher = function (x, y, dir, speed, index) {
 						y: game.kc.y
 					}
 					break;
-				case 'FLEE':
-					aimCoord = null;
-					break;
 			}
-			
 		}
 		me.dir = game.setPlayerDir(me, cellEl, me.dir, aimCoord);
 	}
@@ -815,10 +826,17 @@ var Muncher = function (x, y, dir, speed, index) {
 		me.el.classList.remove('eaten');
 	}
 	
-	function changeMode() {
+	function changeMode(mode) {
 		me.state = (me.state + 1) % 2;
 		console.log('mode now', me.state);
-		setTimeout(changeMode, 10000);
+		modeTimeout = setTimeout(changeMode, 10000);
+	}
+	
+	me.teardown = function () {
+		console.log('destroying');
+		if (modeTimeout) {
+			clearTimeout(modeTimeout);
+		}
 	}
 	
 	function init() {
@@ -833,7 +851,7 @@ var Muncher = function (x, y, dir, speed, index) {
 		maze.putInCell(me.el, x, y);
 		setTimeout(go, 1);
 		
-		setTimeout(changeMode, 10000);
+		modeTimeout = setTimeout(changeMode, 10000);
 		
 	}
 	
@@ -1010,9 +1028,15 @@ var game = new function () {
 		highScoreEl.innerHTML = s;
 	}
 	
-	me.reset = function (keepScore) {
+	me.teardown = function (keepScore) {
+		var i;
+		
 		me.den.stop();
 		delete(me.dots);
+		
+		for (i=0; i<me.munchers.length; i++) {
+			me.munchers[i].teardown();
+		}
 		delete(me.munchers);
 		delete(me.kc);
 		delete(me.den);
@@ -1028,6 +1052,10 @@ var game = new function () {
 			me.setScore(0);
 		}
 		game.sounds['kc-move'].pause();
+	}
+	
+	me.reset = function (keepScore) {
+		me.teardown(keepScore);
 		me.reincarnate();
 	};
 	
@@ -1138,12 +1166,29 @@ var game = new function () {
 			
 		if (numPossibleDirs > 1) {
 			if (aimCoords) {
+				
+				// old code
 				/* var targetDirs = me.getTargetedDirs(player, aimCoords);
 				nextDir = targetDirs[me.randInt(0, targetDirs.length - 1)]; */
+				
+				// new code
 				cellKey = `${player.x}${player.y}`;
 				aimKey = `${aimCoords.x}${aimCoords.y}`;
 				path = maze.graph.shortestPath(cellKey, aimKey).reverse();
-				nextDir = whichDir(cellKey, path[0]); 
+				
+				/*
+				 * If the muncher is almost on top of K.C., then we pick a random 
+				 * direction.
+				 */
+				if (path.length > 0) {
+					nextDir = whichDir(cellKey, path[0]);
+				} else {
+					var targetDirs = me.getTargetedDirs(player, aimCoords);
+					nextDir = targetDirs[me.randInt(0, targetDirs.length - 1)];
+				}
+				if (!cellEl.classList.contains(nextDir)) {
+					console.log('ERROR: ', nextDir, 'not in ', cellEl.className)
+				}
 			} else {
 				if (nextDir === game.oppositeDir(currentDir)) {
 					nextDirIndex = (nextDirIndex + 1) % numPossibleDirs;
@@ -1162,11 +1207,11 @@ var game = new function () {
 		var fromArray = from.split(''),
 			toArray = to.split('');
 			
-		if (fromArray[0] > fromArray [1] ) {
+		if (fromArray[0] > toArray [0] ) {
 			return 'w';
-		} else if (fromArray[0] < fromArray[1]) {
+		} else if (fromArray[0] < toArray[0]) {
 			return 'e';
-		} else if (toArray[0] > toArray[1]) {
+		} else if (fromArray[1] > toArray[1]) {
 			return 'n';
 		} else {
 			return 's';
@@ -1306,9 +1351,11 @@ var game = new function () {
 		overlay.className = '';
 		demo.showLetterByLetter(overlayEl, 'Game Over', 0, 100, function () {
 			setTimeout(function () {
+				
 				if (score > highScore) {
 					setHighScore(score);
 				}
+				game.teardown();
 				overlayEl.innerHTML = '';
 				overlayEl.className = 'hidden';
 				demo.start();
