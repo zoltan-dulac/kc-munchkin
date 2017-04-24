@@ -301,7 +301,6 @@ var maze = new function () {
 				}
 				
 				if (wallCounter === 3) {
-					console.log(i, j);
 					me.setWall(i, j, 'w', 'remove');
 					wallCounter = 0;
 				}
@@ -321,7 +320,6 @@ var maze = new function () {
 				}
 				
 				if (wallCounter === 3) {
-					console.log(i, j);
 					me.setWall(i, j, 'n', 'remove');
 					wallCounter = 0;
 				}
@@ -560,7 +558,6 @@ var KC = function(x, y) {
 			moveHelper(e, 'ArrowDown');
 		}
 		
-		console.log(dir, data.currentDirection	);
 		if (dir) {
 			moveHelper(e, dir);
 		}
@@ -752,6 +749,7 @@ var Muncher = function (x, y, dir, speed, index) {
 	me.speed = speed;
 	me.state = modes.SCATTER;
 	me.index = index;
+	me.isEnemy = true;
 	
 	function animationendHandler(e) {
 		var cellInfo = maze.getCellInDir(me.x, me.y, me.dir);
@@ -817,23 +815,38 @@ var Muncher = function (x, y, dir, speed, index) {
 		return me.el.classList.contains('eaten');
 	}
 	
+	me.isEdible = function () {
+		var classList = me.el.classList;
+		return classList.contains('edible') && !classList.contains('eaten');
+	}
+	
+	me.setEdible = function (val) {
+		if (val) {
+			me.el.classList.add('edible');
+		} else {
+			me.el.classList.remove('edible');
+		}
+	}
+	
+	
 	me.die = function () {
-		me.el.classList.add('eaten');
+		var classList = me.el.classList;
+		me.setEdible(false);
+		classList.add('eaten');
 		game.sounds['muncher-eaten'].play();
 	}
 	
 	me.reincarnate = function () {
 		me.el.classList.remove('eaten');
+		game.doStateCheck();
 	}
 	
 	function changeMode(mode) {
 		me.state = (me.state + 1) % 2;
-		console.log('mode now', me.state);
 		modeTimeout = setTimeout(changeMode, 10000);
 	}
 	
 	me.teardown = function () {
-		console.log('destroying');
 		if (modeTimeout) {
 			clearTimeout(modeTimeout);
 		}
@@ -1030,7 +1043,8 @@ var game = new function () {
 	
 	me.teardown = function (keepScore) {
 		var i;
-		
+		clearTimeout(stateTimeout);
+		setMunchersEdibility(false);
 		me.den.stop();
 		delete(me.dots);
 		
@@ -1044,8 +1058,6 @@ var game = new function () {
 		clearInterval(collisionInterval);
 		me.dots = new Array(6);
 		me.munchers = new Array(3);
-		me.canEatMunchers = false;
-		
 		
 		me.den = null;
 		if (!keepScore) {
@@ -1186,9 +1198,9 @@ var game = new function () {
 					var targetDirs = me.getTargetedDirs(player, aimCoords);
 					nextDir = targetDirs[me.randInt(0, targetDirs.length - 1)];
 				}
-				if (!cellEl.classList.contains(nextDir)) {
+				/* if (!cellEl.classList.contains(nextDir)) {
 					console.log('ERROR: ', nextDir, 'not in ', cellEl.className)
-				}
+				} */
 			} else {
 				if (nextDir === game.oppositeDir(currentDir)) {
 					nextDirIndex = (nextDirIndex + 1) % numPossibleDirs;
@@ -1228,6 +1240,31 @@ var game = new function () {
 		return objOnTop;
 	}
 	
+	
+	function setMunchersEdibility(val) {
+		var i, muncher;
+		
+		game.canEatMunchers = val;
+		
+		munchersEaten = 0;
+
+		for (i=0; i<me.munchers.length; i++) {
+			muncher = me.munchers[i];
+			
+			if (val) {
+				if (muncher.isEaten()) {
+					munchersEaten ++;
+				} else {
+					me.munchers[i].setEdible(val);
+				}
+			} else {
+				me.munchers[i].setEdible(val);
+			}
+		}
+	}
+	
+	
+	
 	function detectCollisions() {
 			var
 				objOnTop = whatIsOnTopOf(me.kc),
@@ -1239,12 +1276,10 @@ var game = new function () {
 			 */
 			if (playerOnTop) {
 				if (objOnTop !== me.kc.el) {
-					if (me.canEatMunchers) { 
-						if (!playerOnTop.isEaten()) {
-							playerOnTop.die();
-							munchersEaten++;
-							me.setScore(Math.pow(2, munchersEaten) * 100, true, true);
-						}
+					if (playerOnTop.isEnemy && playerOnTop.isEdible()) {
+						playerOnTop.die();
+						munchersEaten++;
+						me.setScore(Math.pow(2, munchersEaten) * 100, true, true);
 					} else if (!playerOnTop.isEaten()){
 						me.kc.die();
 					};
@@ -1263,6 +1298,7 @@ var game = new function () {
 						game.sounds['eat-pill'].play();
 						me.setScore(50, true);
 						me.setState('pill-eaten');
+						setMunchersEdibility(true);
 					} else {
 						game.sounds['eat-dot'].play();
 						me.setScore(10, true);
@@ -1285,9 +1321,10 @@ var game = new function () {
 				stateTimeout = setTimeout(function() {
 					me.setState('pill-wearing-out');
 				}, 8000);
-				game.canEatMunchers = true;
+				
 				break;
 			case 'pill-wearing-out':
+				clearTimeout(stateTimeout);
 				me.sounds['warning'].play();
 				stateTimeout = setTimeout(function() {
 					me.setState('');
@@ -1295,17 +1332,18 @@ var game = new function () {
 				break;
 			case '':
 				clearTimeout(stateTimeout);
-				game.canEatMunchers = false;
+				console.log('fooooo!')
+				setMunchersEdibility(false);
 				
-				if (me.munchers) {
-					for (var i = 0; i < me.munchers.length; i++) {
-						me.munchers[i].reincarnate();
-					}
-					munchersEaten = 0;
-				}
 				break;
 			}
 	};
+	
+	me.doStateCheck = function () {
+		if (munchersEaten === 3) {
+			me.setState('');
+		}
+	}
 	
 	/**
 	 * Shuffles array in place. 

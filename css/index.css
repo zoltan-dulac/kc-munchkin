@@ -269,12 +269,17 @@ td.s.w::after {
 	filter: hue-rotate(260deg);
 }
 
-.pill-eaten .muncher:after {
+.pill-eaten .muncher.edible:after {
 	filter: saturate(0%) brightness(2);
 }
 
-.pill-wearing-out .muncher:after {
+.pill-wearing-out .muncher.edible:after {
 	animation: muncher-flash 250ms infinite;
+}
+
+.muncher.eaten {
+	z-index: 10;
+	animation-duration: 100ms;
 }
 
 .muncher.eaten:after {
