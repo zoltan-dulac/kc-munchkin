@@ -484,12 +484,14 @@ var Dot = function(x, y, classes) {
 		cellEl = cellInfo.cell;
 		me.x = cellInfo.x;
 		me.y = cellInfo.y;
-		maze.putInCell(me.el, cellInfo.x, cellInfo.y);
-		me.el.classList.remove('n', 's', 'e', 'w');
-		setTimeout(go, 1);
+		requestAnimationFrame(function () {
+			maze.putInCell(me.el, cellInfo.x, cellInfo.y);
+			go()
+		});
 	}
 	
 	function go() {
+		me.el.classList.remove('n', 's', 'e', 'w');
 		me.dir = game.setPlayerDir(me, cellEl, me.dir);
 	}
 	
@@ -498,7 +500,7 @@ var Dot = function(x, y, classes) {
 		me.el.className = `dot ${(classes || '')} player`;
 		maze.putInCell(me.el, x, y);
 		me.el.addEventListener('animationend', animationendHandler);
-		setTimeout(go, 1);
+		requestAnimationFrame(go);
 	}
 	
 	me.stop = function() {
@@ -518,7 +520,8 @@ var KC = function(x, y) {
 		me = this,
 		lastCmd,
 		isMoving = false,
-		isSoundPlaying = false;
+		isSoundPlaying = false,
+		cellInfo;
 	
 	me.x = x;
 	me.y = y;
@@ -602,19 +605,22 @@ var KC = function(x, y) {
 	
 	function animationendHandler(e) {
 		if (me.dir !== '') {
-			var cellInfo = maze.getCellInDir(me.x, me.y, me.dir);
+			cellInfo = maze.getCellInDir(me.x, me.y, me.dir);
 			if (cellInfo) {
 				cellEl = cellInfo.cell;
 				me.x = cellInfo.x;
 				me.y = cellInfo.y;
-				maze.putInCell(me.el, cellInfo.x, cellInfo.y);
-				me.el.classList.remove('n', 's', 'e', 'w');
-			setTimeout(go, 1);
+				
+				requestAnimationFrame(function() {
+					maze.putInCell(me.el, cellInfo.x, cellInfo.y);
+					go()
+				});
 			}
 		}
 	}
 	
 	function go() {
+		me.el.classList.remove('move', 'n', 's', 'e', 'w');
 		var cellInfo = maze.getCell(me.x, me.y);
 		if (cellInfo.classList.contains(lastCmd)) {
 			me.dir = lastCmd;
@@ -624,7 +630,7 @@ var KC = function(x, y) {
 				me.el.classList.add('move', lastCmd);
 			}
 		} else {
-			me.el.classList.remove('move', 'n', 's', 'e', 'w');
+			//me.el.classList.remove('move', 'n', 's', 'e', 'w');
 			stopSound();
 			isMoving = false;
 		}
@@ -653,11 +659,11 @@ var KC = function(x, y) {
 		if (game.lives === 0) {
 			game.showGameOver();
 		} else {
-			setTimeout(
+			requestAnimationFrame(
 				function() {
 					game.reset(true)
-				}, 
-			1);
+				}
+			);
 		}
 		
 	}
@@ -756,20 +762,23 @@ var Muncher = function (x, y, dir, speed, index) {
 		cellEl = cellInfo.cell;
 		me.x = cellInfo.x;
 		me.y = cellInfo.y;
-		maze.putInCell(me.el, cellInfo.x, cellInfo.y);
-		me.el.classList.remove('n', 's', 'e', 'w');
 		
-		// if the muncher is in the pen and was eaten, reincarnate it.
-		if (me.x === game.den.x && me.y === game.den.y) {
-			me.reincarnate();
-		}
-		
-		setTimeout(go, 1);
+		requestAnimationFrame(function () {
+			maze.putInCell(me.el, cellInfo.x, cellInfo.y);
+			
+			// if the muncher is in the pen and was eaten, reincarnate it.
+			if (me.x === game.den.x && me.y === game.den.y) {
+				me.reincarnate();
+			}
+			go()
+		});
 	}
 	
 	function go() {
 		var aimCoord,
 			ghostState = me.state;
+			
+		me.el.classList.remove('n', 's', 'e', 'w');
 		if (me.isEaten()) {
 			aimCoord = {
 				x: game.den.x,
@@ -862,7 +871,7 @@ var Muncher = function (x, y, dir, speed, index) {
 		
 		me.el.style.animationDuration = me.speed + 'ms';
 		maze.putInCell(me.el, x, y);
-		setTimeout(go, 1);
+		requestAnimationFrame(go);
 		
 		modeTimeout = setTimeout(changeMode, 10000);
 		
@@ -1306,7 +1315,7 @@ var game = new function () {
 	function detectCollisions() {
 			var
 				objOnTop = whatIsOnTopOf(me.kc),
-				playerOnTop = objOnTop.__player,
+				playerOnTop = objOnTop ? objOnTop.__player : null,
 				i;
 			
 			/*
@@ -1448,7 +1457,7 @@ var game = new function () {
 		me.setLives();
 		me.dotSpeed = 3000;
 		me.setState('');
-		collisionInterval = requestAnimationFrame(detectCollisions, 100);
+		collisionInterval = requestAnimationFrame(detectCollisions);
 	}
 	
 	function initSounds() {

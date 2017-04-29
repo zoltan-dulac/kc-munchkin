@@ -512,7 +512,7 @@ td.will-fill {
 }
 
 @keyframes kc-die {
-	100% { background-position: calc(-92vmin / 9 * 8) }
+	100% { background-position-x: calc(-92vmin / 9 * 8) }
 }
 
 /*
@@ -520,11 +520,11 @@ td.will-fill {
  * doesn't, it will show an animation flaw
  */
 @keyframes kc-move {
-	100% { background-position: calc(-92vmin / 9 * 4) }
+	100% { background-position-x: calc(-92vmin / 9 * 4) }
 }
 
 @keyframes muncher-move {
-	100% { background-position: calc(-92vmin / 9 * 2) }
+	100% { background-position-x: calc(-92vmin / 9 * 2) }
 }
 
 @keyframes muncher-flash {
