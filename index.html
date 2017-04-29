@@ -39,7 +39,7 @@
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/zingtouch/1.0.5/zingtouch.js"></script>
 	</head>
 
-	<body>
+	<body data-preload="dot,eyes-down,eyes-left,kc-dying,kc-left,kc-still,muncher-left,pill" data-imagedir="images">
 		<svg width="0" height="0">
 			<filter id="pixelate" x="0" y="0">
 				<feFlood x="2" y="2" height="2" width="2"/>
@@ -58,6 +58,10 @@
 			</filter>
 			
 		</svg>
+		
+		<progress id="preloader" max="8" value="0">
+			<strong>Loaded 0%.</strong>
+		</progress>
 		
 		<table id="maze"></table>
 		<div id="overlay"></div>

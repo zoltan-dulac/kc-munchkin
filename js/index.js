@@ -745,6 +745,44 @@ var demo = new function () {
 	}
 }
 
+var preloader = new function () {
+	var me = this,
+		body = document.body,
+		preloadNames = body.dataset.preload.split(','),
+		imageDir = body.dataset.imagedir,
+		images = [],
+		numLoaded = 0,
+		el = document.getElementById('preloader');
+		
+		function imageErrorHandler(e) {
+			console.error(`Error: invalid image ${e.target.src}`);
+			imageLoadHandler();
+		}
+		
+		
+		function imageLoadHandler() {
+			numLoaded ++;
+			if (numLoaded == images.length) {
+				el.className = 'hidden';
+				me.callback();
+			}
+			
+			el.value = numLoaded;
+			el.innerHTML = `<strong>Loaded ${numLoaded * 100 / images.length}%.`
+		}
+		
+		me.init = function(callback) {
+			me.callback = callback;
+			for (i = 0; i < preloadNames.length; i++) {
+				var image = new Image();
+				image.onload = imageLoadHandler;
+				image.onError = imageErrorHandler;
+				image.src = `${imageDir}/${preloadNames[i]}.gif`;
+				images.push(image);
+			}
+		}
+}
+
 var game = new function () {
 	var me = this,
 		score = 0,
@@ -1140,14 +1178,16 @@ var game = new function () {
 		me.sounds['kc-move'].volume(0.1);
 	}
 	
-	me.init = function () {
+	me.initHelper = function () {
 		window.scrollTo(0, 1);
 		bonusDisplayEl.addEventListener('animationend', bonusDisplayAnimationEnd);
 		initSounds();
 		demo.start();
 	}
 	
-	
+	me.init = function () {
+		preloader.init(me.initHelper);
+	}
 };
 
 

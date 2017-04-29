@@ -17,6 +17,10 @@ body {
 	text-transform: uppercase;
 }
 
+.hidden {
+	display: none;
+}
+
 .sup {
 	top: -2.1vmin;
 	position: relative;
@@ -428,6 +432,71 @@ td.s.w::after {
 	height: 100%;
 	width: 100%;
 	background: linear-gradient(0deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 60%);
+}
+
+
+/*
+ * Progress Bars
+ */
+
+/* All HTML5 progress enabled browsers */
+#preloader {
+
+	/* Turns off styling - not usually needed, but good to know. */
+	appearance: none;
+	-moz-appearance: none;
+	-webkit-appearance: none;
+	/* gets rid of default border in Firefox and Opera. */
+	border: solid rgba(16, 16, 16, 0.8) 5px;
+	border-radius: 10px;
+	/* Dimensions */
+	width: 238px;
+	height: 45px;
+	position: absolute;
+	left: calc(50vw - 238px / 2);
+	top: calc(50vh - 45px / 2);
+}
+
+/*
+ * Background of the progress bar background
+ */
+
+/* Firefox and Polyfill */
+#preloader {
+	background: #cccccc !important; /* !important only needed in polyfill */
+}
+/* Chrome */
+#preloader::-webkit-progress-bar {
+	background: #cccccc;
+}
+/*
+ * Background of the progress bar value
+ */
+
+/* Firefox */
+#preloader::-moz-progress-bar {
+	border-radius: 5px;
+	background-image: -moz-linear-gradient(
+		center bottom,
+		rgb(43,194,83) 37%,
+		rgb(84,240,84) 69%
+	);
+}
+/* Chrome */
+#preloader::-webkit-progress-value {
+	border-radius: 5px;
+	background-image: -webkit-gradient(
+		linear,
+		left bottom,
+		left top,
+		color-stop(0, rgb(43,194,83)),
+		color-stop(1, rgb(84,240,84))
+	);
+	background-image: -webkit-linear-gradient(
+		center bottom,
+		rgb(43,194,83) 37%,
+		rgb(84,240,84) 69%
+	);
 }
 
 @keyframes kc-die {
