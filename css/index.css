@@ -173,7 +173,6 @@ td.s.w::after {
 	image-rendering: -moz-crisp-edges;
 	image-rendering: pixelated;
 	
-	transform: translate3d(0, 0, 0);
 	/* transition: transform linear 250ms; */
 }
 
@@ -207,22 +206,27 @@ td.s.w::after {
 	background-repeat: no-repeat;
 }
 
+.player {
+	animation-timing-function: linear;
+	animation-duration: 500ms;
+}
+
 /* Moving */
 .player.w {
-	animation: go-west linear 500ms;
+	animation-name: go-west;
 }
 
 
 .player.e {
-	animation: go-east linear 500ms;
+	animation-name: go-east;
 }
 
 .player.n {
-	animation: go-north linear 500ms;
+	animation-name: go-north;
 }
 
 .player.s {
-	animation: go-south linear 500ms;
+	animation-name: go-south;
 }
 
 .player.dot {
@@ -232,6 +236,15 @@ td.s.w::after {
 
 .kc {
 	z-index: 20;
+}
+
+.kc.pause {
+	animation-play-state: paused;
+}
+
+.kc.reversing {
+	animation-play-state: running;
+	animation-direction: reverse;
 }
 
 .stop {

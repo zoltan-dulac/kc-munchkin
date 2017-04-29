@@ -518,12 +518,14 @@ var KC = function(x, y) {
 		me = this,
 		lastCmd,
 		isMoving = false,
-		isSoundPlaying = false;
+		isSoundPlaying = false,
+		reversing = false;
 	
 	me.x = x;
 	me.y = y;
 	me.dir = null;
 	me.el = null;
+	
 	
 	angleKeyMapping = [];
 	angleKeyMapping[360] = 'ArrowRight';
@@ -531,6 +533,35 @@ var KC = function(x, y) {
 	angleKeyMapping[90] = 'ArrowUp';
 	angleKeyMapping[180] = 'ArrowLeft';
 	angleKeyMapping[270] = 'ArrowDown';
+	
+	me.toggleReversing = function() {
+		me.setReversing(!reversing);
+	}
+	
+	me.setReversing = function (val) {
+		if (val === reversing) {
+			return;
+		}
+		
+		
+		var classList = me.el.classList;
+		
+		if (reversing) {
+			console.log('REVERSING!')
+			classList.add('pause');
+			requestAnimationFrame(function() {
+				classList.add('reversing');
+				classList.remove('pause');
+			})
+		} else {
+			console.log('UNREVERSING!');
+			classList.remove('reversing', 'pause');
+		}
+		
+		reversing = val;
+		console.log('reversing', me.el.classList);
+		
+	}
 	
 	function playSound() {
 		if (!isSoundPlaying) {
@@ -568,7 +599,12 @@ var KC = function(x, y) {
 	}
 	
 	function moveHelper(e, key) {
-		//me.el.style.animationPlayState=''; //me.el.classList.remove('paused');
+		console.log('moveHelper', e, key);
+		
+		if (key !== ' ') {
+			me.el.style.transform = '';
+		}
+		
 		switch (key) {
 			case "ArrowDown":
 				lastCmd = 's';
@@ -586,12 +622,23 @@ var KC = function(x, y) {
 				lastCmd = 'e';
 				e.preventDefault();
 				break;
+			case " ":
+				lastCmd = '';
+				isMoving = false;
+				stopTestTestTest(e);
+				break;
+				
 		}
 		
 		if (lastCmd !== '') {
 			if (isMoving) {
-				
+				if (me.dir === game.oppositeDir(lastCmd)) {
+					console.log('toggling!');
+					// we gotta get this dude moving in the opposite direction
+					me.toggleReversing();
+				}
 			} else {
+				// we are here at the beginning of the game.
 				isMoving = true;
 				go();
 			}
@@ -601,7 +648,7 @@ var KC = function(x, y) {
 	}
 	
 	function animationendHandler(e) {
-		if (me.dir !== '') {
+		if (me.dir !== '' && !reversing) {
 			var cellInfo = maze.getCellInDir(me.x, me.y, me.dir);
 			if (cellInfo) {
 				cellEl = cellInfo.cell;
@@ -612,15 +659,17 @@ var KC = function(x, y) {
 			setTimeout(go, 1);
 			}
 		}
+		me.setReversing(false);
 	}
 	
 	function go() {
 		var cellInfo = maze.getCell(me.x, me.y);
 		if (cellInfo.classList.contains(lastCmd)) {
+			me.setReversing(false);
 			me.dir = lastCmd;
 			if (lastCmd !== '') {
 				playSound();
-				
+				console.log('add', lastCmd);
 				me.el.classList.add('move', lastCmd);
 			}
 		} else {
@@ -660,6 +709,17 @@ var KC = function(x, y) {
 			1);
 		}
 		
+	}
+	
+	function stopTestTestTest(e) {
+		e.preventDefault();
+		var transform = document.defaultView.getComputedStyle(me.el, null).transform;
+		
+		me.el.classList.remove('move', 'n', 's', 'e', 'w');
+		me.el.style.transform = transform;
+			
+		lastCmd = ''; 
+		//me.el.style.animationPlayState='paused'; //classList.add('paused');
 	}
 	
 	function stop(e) {
@@ -1332,7 +1392,6 @@ var game = new function () {
 				break;
 			case '':
 				clearTimeout(stateTimeout);
-				console.log('fooooo!')
 				setMunchersEdibility(false);
 				
 				break;
@@ -1406,7 +1465,7 @@ var game = new function () {
 		createDots();
 		createKC();
 		createDen();
-		createMunchers();
+		//createMunchers();
 		me.setLives();
 		me.dotSpeed = 3000;
 		me.setState('');
