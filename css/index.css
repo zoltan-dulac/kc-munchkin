@@ -622,19 +622,19 @@ td.will-fill {
 	}
 	
 	@keyframes go-west {
-		100% { transform: translate3d(calc(-110vw / 9), 0, 0); }
+		100% { transform: translate3d(calc(-110vw / 9 + 1vw), 0, 0); }
 	}
 	
 	@keyframes go-east {
-		100% { transform: translate3d(calc(110vw / 9), 0, 0); }
+		100% { transform: translate3d(calc(110vw / 9 - 1vw), 0, 0); }
 	}
 	
 	@keyframes go-north {
-		100% { 	transform: translate3d(0, calc(-110vw / 9), 0); }
+		100% { 	transform: translate3d(0, calc(-110vw / 9 + 1vw), 0); }
 	}
 	
 	@keyframes go-south {
-		100% { 	transform: translate3d(0, calc(110vw / 9), 0); }
+		100% { 	transform: translate3d(0, calc(110vw / 9 - 1vw), 0); }
 	}
 	
 
