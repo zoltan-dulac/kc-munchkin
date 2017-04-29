@@ -1310,7 +1310,9 @@ var game = new function () {
 		}
 	}
 	
-	
+	function detectCollisionsInterval() {
+		requestAnimationFrame(detectCollisions)
+	}
 	
 	function detectCollisions() {
 			var
@@ -1356,7 +1358,7 @@ var game = new function () {
 					}
 				}
 			}
-			requestAnimationFrame(detectCollisions);
+			//requestAnimationFrame(detectCollisions);
 	}
 	
 	
@@ -1457,7 +1459,7 @@ var game = new function () {
 		me.setLives();
 		me.dotSpeed = 3000;
 		me.setState('');
-		collisionInterval = requestAnimationFrame(detectCollisions);
+		collisionInterval = setInterval(detectCollisionsInterval, 10);
 	}
 	
 	function initSounds() {

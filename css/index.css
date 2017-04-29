@@ -175,8 +175,8 @@ td.will-fill {
  */
 
 .player {
-	width: calc(92vmin / 9 );
-	height: calc(92vmin / 9 );
+	width: calc(92vmin / 9 - 1px);
+	height: calc(92vmin / 9 - 1px);
 	position: absolute;
 	top: 1vmin;
 	left: 1vmin;
