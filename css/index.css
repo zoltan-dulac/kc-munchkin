@@ -21,6 +21,7 @@ body {
 	display: none;
 }
 
+
 .sup {
 	top: -2.1vmin;
 	position: relative;
@@ -162,6 +163,13 @@ td.s.w::after {
 }
 
 
+td.will-empty {
+	will-change: contents;
+}
+
+td.will-fill {
+	will-change: contents;
+}
 /*
  * moving objects
  */
