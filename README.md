@@ -27,3 +27,18 @@ game.  The maze algorithm is a modified version of
 
 No frameworks were used except for the [Howler](https://howlerjs.com/) for
 the sound effects.
+
+This game is still in heavy development.  Right now, there is one level that
+plays over and over again.  Future revisions will have different levels, including:
+
+- a level that plays like K.C.'s Crazy Chase.
+- a level that will have trap doors.
+- a level that has a mutating maze (i.e. walls disappear and hide)
+- a level that has an invisible maze
+- possibly more levels.
+
+This game also doesn't have any permission from Ed Averett.  I do intend to 
+ask for permission when I can find out how to get a hold of him.  This game
+is not intended to make money -- it is a labour of love.  It is forbidden to
+use this game to make money.  Please feel free to download and hack, but not
+to exploit for profit. :-)
