@@ -93,11 +93,6 @@ function Graph(){
 }
 
 
-/*
- * Graphics from: http://atariage.com/forums/topic/220324-kc-munchkin/page-3
- */
-
-
 Node.prototype.add = function(tag, cnt, txt) {
 	for (var i = 0; i < cnt; i++)
 		this.appendChild(ce(tag, txt));
@@ -129,6 +124,14 @@ function ce(tag, txt) {
 	return x;
 }
 
+/*
+ * This maze object is a modified version of this:
+ * https://rosettacode.org/wiki/Maze_generation#JavaScript
+ * 
+ * Note that it has been modified so that it doesn't become maze with
+ * entrance and exit, but a video-game-like maze (with no dead ends and more
+ * than one way to get around).)
+ */
 var maze = new function () { 
 	var 
 		me = this;
@@ -201,8 +204,27 @@ var maze = new function () {
 		return null;
 	}
 	
+	/*
+	 * WARNING: Call this only within a requestAnimationFrame() 
+	 */
 	me.putInCell = function(el, x, y) {
+		var originalParent = el.parentNode,
+			originalCell = (originalParent && originalParent.nodeName === 'TD') ? originalParent : null,
+			targetCell = me.getCell(x, y),
+			originalCellClassList = originalCell ? originalCell.classList : null,
+			targetCellClassList = targetCell.classList;
+		
+		if (originalCell) {
+			originalCellClassList.add('will-empty');
+		}
+		targetCellClassList.add('will-fill');
 		me.getCell(x,y).appendChild(el);
+		targetCellClassList.remove('will-fill');
+		
+		if (originalCell) {
+			originalCellClassList.remove('will-empty');
+		}
+		
 	}
 	
 	function toArray(obj) {
@@ -470,7 +492,7 @@ var maze = new function () {
 /*******************
  * DOT
  *******************/
-var Dot = function(x, y, classes) {
+var Dot = function(x, y, index, classes) {
 	var
 		me = this,
 		cellEl = maze.getCell(x, y);
@@ -478,6 +500,8 @@ var Dot = function(x, y, classes) {
 	me.x = x;
 	me.y = y;
 	me.el = null;
+	me.isDot = true;
+	me.index = index;;
 	
 	function animationendHandler(e) {
 		var cellInfo = maze.getCellInDir(me.x, me.y, me.dir);
@@ -497,6 +521,7 @@ var Dot = function(x, y, classes) {
 	
 	function init() {
 		me.el = ce('div');
+		me.el.__player = me;
 		me.el.className = `dot ${(classes || '')} player`;
 		maze.putInCell(me.el, x, y);
 		me.el.addEventListener('animationend', animationendHandler);
@@ -684,6 +709,7 @@ var KC = function(x, y) {
 	function init() {
 		me.el = ce('div');
 		me.el.className = 'kc player';
+		me.el.__player = me;
 		maze.putInCell(me.el, x, y);
 		
 		document.addEventListener('keydown', move);
@@ -950,40 +976,60 @@ var demo = new function () {
 		document.removeEventListener('touchstart', keyDownClickEvent);
 	}
 	
-	me.showLetterByLetter = function (targetEl, message, index, interval, callback) {		
-		if (index < message.length) { 
-			targetEl.innerHTML += `<span class="char-${index}">${message[index++]}</span>`; 
-			setTimeout(
-				function () {
-					requestAnimationFrame(
+	me.showLetterByLetter = function (targetEl, message, index, interval, callback) {
+		targetEl.classList.add('letter-by-letter-animation');
+		me.showLetterByLetterHelper(targetEl, message, index, interval, callback);
+	}
+	
+	me.showLetterByLetterHelper = function (targetEl, message, index, interval, callback) {
+		requestAnimationFrame(
+			function () {
+				if (index < message.length) { 
+					targetEl.innerHTML += `<span class="char-${index}">${message[index++]}</span>`; 
+					setTimeout(
 						function () {
-							me.showLetterByLetter(targetEl, message, index, interval, callback);
-						}
-					)
-				}, interval
-			); 
-		} else if (callback){
-			callback();
-		}
+							requestAnimationFrame(
+								function () {
+									me.showLetterByLetter(targetEl, message, index, interval, callback);
+								}
+							)
+						}, interval
+					); 
+				} else {
+					targetEl.classList.remove('letter-by-letter-animation');
+					if (callback){
+						callback();
+					}
+				}
+			}
+		);
 	}
 }
 
 var preloader = new function () {
 	var me = this,
-		body = document.body,
-		preloadNames = body.dataset.preload.split(','),
-		imageDir = body.dataset.imagedir,
+		dataset = document.body.dataset,
+		preloadImages = dataset.preloadImages.split(','),
+		imageDir = dataset.imageDir,
+		preloadSounds = dataset.preloadSounds.split(','),
+		totalToLoad = preloadImages.length + preloadSounds.length,
+		soundDir = dataset.soundDir,
 		images = [],
 		numLoaded = 0,
-		el = document.getElementById('preloader');
+		el = document.getElementById('preloader'),
+		i;
 		
-		function imageErrorHandler(e) {
+		function assetErrorHandler(e) {
 			console.error(`Error: invalid image ${e.target.src}`);
-			imageLoadHandler();
+			assetLoadHandler();
 		}
 		
 		
-		function imageLoadHandler() {
+		function assetLoadHandler() {
+			requestAnimationFrame(imageLoadFrame);
+		}
+		
+		function imageLoadFrame() {
 			numLoaded ++;
 			if (numLoaded == images.length) {
 				el.className = 'hidden';
@@ -994,14 +1040,27 @@ var preloader = new function () {
 			el.innerHTML = `<strong>Loaded ${numLoaded * 100 / images.length}%.`
 		}
 		
+		
+		
 		me.init = function(callback) {
 			me.callback = callback;
-			for (i = 0; i < preloadNames.length; i++) {
+			for (i = 0; i < preloadImages.length; i++) {
 				var image = new Image();
-				image.onload = imageLoadHandler;
-				image.onError = imageErrorHandler;
-				image.src = `${imageDir}/${preloadNames[i]}.gif`;
+				image.onload = assetLoadHandler;
+				image.onerror = assetErrorHandler;
+				image.src = `${imageDir}/${preloadImages[i]}.gif`;
 				images.push(image);
+			}
+			
+			for (i=0; i<preloadSounds.length; i++) {
+				var file = preloadSounds[i];
+				game.sounds[file] = new Howl({
+					autoplay: (i === 'kc-move'),
+					src: ['sounds/' + file + '.wav'],
+					loop: (i === 'kc-move'),
+					onload: assetLoadHandler,
+					onloaderror: assetErrorHandler,
+				});
 			}
 		}
 }
@@ -1023,7 +1082,8 @@ var game = new function () {
 		munchersEaten = 0;
 	
 	me.dots = Array(6),
-	me.munchers = Array(3),
+	me.munchers = [],
+	me.numMunchers = 0,
 	me.kc,
 	me.den,
 	me.dotSpeed;
@@ -1137,9 +1197,9 @@ var game = new function () {
 		
 		for (x = 1; x <= maze.width; x += maze.width - 1) {
 			for ( y = 1; y <= maze.height; y += maze.height - 1) {
-				me.dots[i] = new Dot(x, y, 'pill');
-				me.dots[i + 1] = new Dot (x, (y==1 ? y + 1 : y - 1));
-				me.dots[i + 2] = new Dot ((x==1 ? x + 1 : x - 1), y);
+				me.dots[i] = new Dot(x, y, i, 'pill');
+				me.dots[i + 1] = new Dot (x, (y==1 ? y + 1 : y - 1), i+1);
+				me.dots[i + 2] = new Dot ((x==1 ? x + 1 : x - 1), y, i+2);
 				i+=3;;
 			}
 		}
@@ -1156,7 +1216,7 @@ var game = new function () {
 	function createMunchers() {
 		var i;
 		
-		for (i=0; i<me.munchers.length; i++) {
+		for (i=0; i<me.numMunchers; i++) {
 			me.munchers[i] = new Muncher(5 , 5, 'n', 350 + 100 * i, i);
 		}
 		
@@ -1235,19 +1295,15 @@ var game = new function () {
 				aimKey = `${aimCoords.x}${aimCoords.y}`;
 				path = maze.graph.shortestPath(cellKey, aimKey).reverse();
 				
-				/*
-				 * If the muncher is almost on top of K.C., then we pick a random 
-				 * direction.
-				 */
+				// If the muncher is almost on top of K.C., then we pick a random 
+				// direction.
 				if (path.length > 0) {
 					nextDir = whichDir(cellKey, path[0]);
 				} else {
 					var targetDirs = me.getTargetedDirs(player, aimCoords);
 					nextDir = targetDirs[me.randInt(0, targetDirs.length - 1)];
 				}
-				/* if (!cellEl.classList.contains(nextDir)) {
-					console.log('ERROR: ', nextDir, 'not in ', cellEl.className)
-				} */
+				
 			} else {
 				if (nextDir === game.oppositeDir(currentDir)) {
 					nextDirIndex = (nextDirIndex + 1) % numPossibleDirs;
@@ -1284,7 +1340,8 @@ var game = new function () {
 			midX = box.left + w/2,
 			midY = box.top + h/2,
 			objOnTop = document.elementFromPoint(midX, midY);
-		return objOnTop;
+			
+		return objOnTop.__player;
 	}
 	
 	
@@ -1316,49 +1373,45 @@ var game = new function () {
 	
 	function detectCollisions() {
 			var
-				objOnTop = whatIsOnTopOf(me.kc),
-				playerOnTop = objOnTop ? objOnTop.__player : null,
+				playerOnTop = whatIsOnTopOf(me.kc),
 				i;
 			
 			/*
 			 * Only if playerOnTop is a muncher.
 			 */
 			if (playerOnTop) {
-				if (objOnTop !== me.kc.el) {
-					if (playerOnTop.isEnemy && playerOnTop.isEdible()) {
-						playerOnTop.die();
-						munchersEaten++;
-						me.setScore(Math.pow(2, munchersEaten) * 100, true, true);
-					} else if (!playerOnTop.isEaten()){
-						me.kc.die();
-					};
+				if (playerOnTop !== me.kc) {
+					if (playerOnTop.isEnemy) {
+						if (playerOnTop.isEdible()) {
+							playerOnTop.die();
+							munchersEaten++;
+							me.setScore(Math.pow(2, munchersEaten) * 100, true, true);
+						} else if (!playerOnTop.isEaten()){
+							me.kc.die();
+						}
+					} else if (playerOnTop.isDot) {
+						console.log('xxx');
+						playerOnTop.stop();
+						me.dots.splice(playerOnTop.index, 1);
+						
+						if (playerOnTop.el.classList.contains('pill')) {
+							game.sounds['eat-pill'].play();
+							me.setScore(50, true);
+							me.setState('pill-eaten');
+							setMunchersEdibility(true);
+						} else {
+							game.sounds['eat-dot'].play();
+							me.setScore(10, true);
+						}
+						me.dotSpeed -= 250;
+						if (me.dots.length === 0) {
+							me.reset(true);
+						}
+					}
 				}
 			}
 			
-			for (i=0; i<me.dots.length; i++) {
-				var dot = me.dots[i];
-				objOnTop = whatIsOnTopOf(dot);
-				
-				if (objOnTop === me.kc.el) {
-					dot.stop();
-					me.dots.splice(i, 1);
-					
-					if (dot.el.classList.contains('pill')) {
-						game.sounds['eat-pill'].play();
-						me.setScore(50, true);
-						me.setState('pill-eaten');
-						setMunchersEdibility(true);
-					} else {
-						game.sounds['eat-dot'].play();
-						me.setScore(10, true);
-					}
-					me.dotSpeed -= 250;
-					if (me.dots.length === 0) {
-						me.reset(true);
-					}
-				}
-			}
-			//requestAnimationFrame(detectCollisions);
+			
 	}
 	
 	
@@ -1381,9 +1434,7 @@ var game = new function () {
 				break;
 			case '':
 				clearTimeout(stateTimeout);
-				console.log('fooooo!')
 				setMunchersEdibility(false);
-				
 				break;
 			}
 	};
@@ -1455,6 +1506,7 @@ var game = new function () {
 		createDots();
 		createKC();
 		createDen();
+		me.numMunchers = 3;
 		createMunchers();
 		me.setLives();
 		me.dotSpeed = 3000;
@@ -1463,18 +1515,6 @@ var game = new function () {
 	}
 	
 	function initSounds() {
-		var soundFiles = ['eat-dot', 'eat-pill', 'kc-die1', 'muncher-eaten', 'warning', 'kc-move'],
-			i;
-			
-		for (var i=0; i<soundFiles.length; i++) {
-			var file = soundFiles[i];
-			me.sounds[file] = new Howl({
-				autoplay: (i === 'kc-move'),
-				src: ['sounds/' + file + '.wav'],
-				loop: (i === 'kc-move')
-			});
-		}
-		
 		me.sounds['kc-move'].loop(true);
 		me.sounds['kc-move'].play();
 		me.sounds['kc-move'].pause();
@@ -1485,7 +1525,7 @@ var game = new function () {
 		window.scrollTo(0, 1);
 		bonusDisplayEl.addEventListener('animationend', bonusDisplayAnimationEnd);
 		initSounds();
-		demo.start();
+		setTimeout(demo.start, 500);
 	}
 	
 	me.init = function () {

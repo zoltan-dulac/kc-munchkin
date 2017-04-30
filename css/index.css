@@ -162,7 +162,6 @@ td.s.w::after {
 	left: -0.7vmin;
 }
 
-
 td.will-empty {
 	will-change: contents;
 }
@@ -170,6 +169,11 @@ td.will-empty {
 td.will-fill {
 	will-change: contents;
 }
+
+td.letter-by-letter-animation {
+	will-change: contents;
+}
+
 /*
  * moving objects
  */
@@ -186,6 +190,7 @@ td.will-fill {
 	image-rendering: pixelated;
 	
 	transform: translate3d(0, 0, 0);
+	will-change: transform;
 	/* transition: transform linear 250ms; */
 }
 
@@ -238,7 +243,7 @@ td.will-fill {
 }
 
 .player.dot {
-	z-index: 10;
+	z-index: 30;
 	/* transition: transform linear 1000ms; */
 }
 
@@ -622,19 +627,19 @@ td.will-fill {
 	}
 	
 	@keyframes go-west {
-		100% { transform: translate3d(calc(-110vw / 9 + 1vw), 0, 0); }
+		100% { transform: translate3d(calc(-110vw / 9), 0, 0); }
 	}
 	
 	@keyframes go-east {
-		100% { transform: translate3d(calc(110vw / 9 - 1vw), 0, 0); }
+		100% { transform: translate3d(calc(110vw / 9 ), 0, 0); }
 	}
 	
 	@keyframes go-north {
-		100% { 	transform: translate3d(0, calc(-110vw / 9 + 1vw), 0); }
+		100% { 	transform: translate3d(0, calc(-110vw / 9 ), 0); }
 	}
 	
 	@keyframes go-south {
-		100% { 	transform: translate3d(0, calc(110vw / 9 - 1vw), 0); }
+		100% { 	transform: translate3d(0, calc(110vw / 9 ), 0); }
 	}
 	
 
