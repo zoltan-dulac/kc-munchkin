@@ -218,6 +218,18 @@ var maze = new function () {
 			originalCellClassList.add('will-empty');
 		}
 		targetCellClassList.add('will-fill');
+		
+		// first remove node from page (if it's there)
+		if (el.parentNode) {
+			el.parentNode.removeChild(el);
+		}
+		
+		// now remove all direction info.  You must do it after you remove the node
+		// to prevent the object from appearing in the previous cell for even a 
+		// minute fraction of a sec.
+		el.classList.remove('move', 'n', 's', 'e', 'w');
+		
+		// now, put in the next cell
 		me.getCell(x,y).appendChild(el);
 		targetCellClassList.remove('will-fill');
 		
@@ -515,7 +527,6 @@ var Dot = function(x, y, index, classes) {
 	}
 	
 	function go() {
-		me.el.classList.remove('n', 's', 'e', 'w');
 		me.dir = game.setPlayerDir(me, cellEl, me.dir);
 	}
 	
@@ -592,7 +603,8 @@ var KC = function(x, y) {
 	}
 
 	function move(e) {
-		moveHelper(e, e.key);
+		console.log(e, e.key)
+		moveHelper(e, e.key || ('Arrow' + e.keyIdentifier));
 	}
 	
 	function moveHelper(e, key) {
@@ -645,7 +657,6 @@ var KC = function(x, y) {
 	}
 	
 	function go() {
-		me.el.classList.remove('move', 'n', 's', 'e', 'w');
 		var cellInfo = maze.getCell(me.x, me.y);
 		if (cellInfo.classList.contains(lastCmd)) {
 			me.dir = lastCmd;
@@ -655,7 +666,6 @@ var KC = function(x, y) {
 				me.el.classList.add('move', lastCmd);
 			}
 		} else {
-			//me.el.classList.remove('move', 'n', 's', 'e', 'w');
 			stopSound();
 			isMoving = false;
 		}
@@ -669,8 +679,8 @@ var KC = function(x, y) {
 		isSoundPlaying=false;
 		game.sounds['kc-die1'].play();
 		game.stopPlayers();
-		document.removeEventListener('keydown', move);
-		document.removeEventListener('keyup', stop);
+		window.removeEventListener('keydown', move);
+		window.removeEventListener('keyup', stop);
 		
 	}
 	
@@ -712,8 +722,8 @@ var KC = function(x, y) {
 		me.el.__player = me;
 		maze.putInCell(me.el, x, y);
 		
-		document.addEventListener('keydown', move);
-		document.addEventListener('keyup', stop);
+		window.addEventListener('keydown', move);
+		window.addEventListener('keyup', stop);
 		initGestures();
 		me.el.addEventListener('animationend', animationendHandler);
 	}
@@ -803,8 +813,7 @@ var Muncher = function (x, y, dir, speed, index) {
 	function go() {
 		var aimCoord,
 			ghostState = me.state;
-			
-		me.el.classList.remove('n', 's', 'e', 'w');
+
 		if (me.isEaten()) {
 			aimCoord = {
 				x: game.den.x,
@@ -915,9 +924,9 @@ var demo = new function () {
 		kcDemoEl;
 	
 	me.start = function () {
-		document.addEventListener('keydown', keyDownClickEvent);
-		document.addEventListener('click', keyDownClickEvent);
-		document.addEventListener('touchstart', keyDownClickEvent);
+		window.addEventListener('keydown', keyDownClickEvent);
+		window.addEventListener('click', keyDownClickEvent);
+		window.addEventListener('touchstart', keyDownClickEvent);
 		bodyEl.className = 'demo-mode';
 		slide1();
 	}
@@ -971,9 +980,9 @@ var demo = new function () {
 	me.stop = function () {
 		demoEl.innerHTML = '';
 		bodyEl.className = '';
-		document.removeEventListener('keydown', keyDownClickEvent);
-		document.removeEventListener('click', keyDownClickEvent);
-		document.removeEventListener('touchstart', keyDownClickEvent);
+		window.removeEventListener('keydown', keyDownClickEvent);
+		window.removeEventListener('click', keyDownClickEvent);
+		window.removeEventListener('touchstart', keyDownClickEvent);
 	}
 	
 	me.showLetterByLetter = function (targetEl, message, index, interval, callback) {
@@ -1513,7 +1522,7 @@ var game = new function () {
 		me.setLives();
 		me.dotSpeed = 3000;
 		me.setState('');
-		collisionInterval = setInterval(detectCollisions, 10);
+		collisionInterval = setInterval(detectCollisionsInterval, 10);
 	}
 	
 	function initSounds() {

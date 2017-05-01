@@ -191,6 +191,10 @@ td.letter-by-letter-animation {
 	
 	transform: translate3d(0, 0, 0);
 	will-change: transform;
+	
+	animation-timing-function: linear;
+	animation-duration: 500ms;
+	animation-fill-mode: forwards;
 	/* transition: transform linear 250ms; */
 }
 
@@ -226,20 +230,20 @@ td.letter-by-letter-animation {
 
 /* Moving */
 .player.w {
-	animation: go-west linear 500ms;
+	animation-name: go-west;
 }
 
 
 .player.e {
-	animation: go-east linear 500ms;
+	animation-name: go-east;
 }
 
 .player.n {
-	animation: go-north linear 500ms;
+	animation-name: go-north;
 }
 
 .player.s {
-	animation: go-south linear 500ms;
+	animation-name: go-south;
 }
 
 .player.dot {
@@ -416,7 +420,9 @@ td.letter-by-letter-animation {
 }
 
 .slide .kc.e {
-	animation: go-east-demo linear 4000ms;
+	animation-name: go-east-demo;
+	animation-timing-function: linear;
+	animation-duration: 4000ms;
 }
 
 .kc-munchkin-logo {
