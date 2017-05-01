@@ -1079,9 +1079,10 @@ var game = new function () {
 		collisionInterval,
 		stateTimeout,
 		bonusDisplayEl = document.getElementById('bonus-display'),
-		munchersEaten = 0;
+		munchersEaten = 0,
+		numActiveDots = 0;
 	
-	me.dots = Array(6),
+	me.dots = [],
 	me.munchers = [],
 	me.numMunchers = 0,
 	me.kc,
@@ -1163,7 +1164,7 @@ var game = new function () {
 		delete(me.den);
 		
 		clearInterval(collisionInterval);
-		me.dots = new Array(6);
+		me.dots = [];
 		me.munchers = new Array(3);
 		
 		me.den = null;
@@ -1200,9 +1201,10 @@ var game = new function () {
 				me.dots[i] = new Dot(x, y, i, 'pill');
 				me.dots[i + 1] = new Dot (x, (y==1 ? y + 1 : y - 1), i+1);
 				me.dots[i + 2] = new Dot ((x==1 ? x + 1 : x - 1), y, i+2);
-				i+=3;;
+				i+=3;
 			}
 		}
+		numActiveDots = i;
 	}
 	
 	function createKC() {
@@ -1217,7 +1219,8 @@ var game = new function () {
 		var i;
 		
 		for (i=0; i<me.numMunchers; i++) {
-			me.munchers[i] = new Muncher(5 , 5, 'n', 350 + 100 * i, i);
+			console.log(350 + 100 * i);
+			me.munchers[i] = new Muncher(5 , 5, 'n', 450 + 50 * i, i);
 		}
 		
 	}
@@ -1390,9 +1393,8 @@ var game = new function () {
 							me.kc.die();
 						}
 					} else if (playerOnTop.isDot) {
-						console.log('xxx');
 						playerOnTop.stop();
-						me.dots.splice(playerOnTop.index, 1);
+						numActiveDots --;
 						
 						if (playerOnTop.el.classList.contains('pill')) {
 							game.sounds['eat-pill'].play();
@@ -1404,7 +1406,7 @@ var game = new function () {
 							me.setScore(10, true);
 						}
 						me.dotSpeed -= 250;
-						if (me.dots.length === 0) {
+						if (numActiveDots === 0) {
 							me.reset(true);
 						}
 					}
@@ -1511,7 +1513,7 @@ var game = new function () {
 		me.setLives();
 		me.dotSpeed = 3000;
 		me.setState('');
-		collisionInterval = setInterval(detectCollisionsInterval, 10);
+		collisionInterval = setInterval(detectCollisions, 10);
 	}
 	
 	function initSounds() {
