@@ -189,12 +189,15 @@ td.letter-by-letter-animation {
 	image-rendering: -moz-crisp-edges;
 	image-rendering: pixelated;
 	
+<<<<<<< HEAD
+=======
 	transform: translate3d(0, 0, 0);
 	will-change: transform;
 	
 	animation-timing-function: linear;
 	animation-duration: 500ms;
 	animation-fill-mode: forwards;
+>>>>>>> 665eb7efaa1fe57cb6bde6682e749fd8100bb272
 	/* transition: transform linear 250ms; */
 }
 

@@ -557,8 +557,11 @@ var KC = function(x, y) {
 		lastCmd,
 		isMoving = false,
 		isSoundPlaying = false,
-		reversing = false,
+<<<<<<< HEAD
+		reversing = false;
+=======
 		cellInfo;
+>>>>>>> 665eb7efaa1fe57cb6bde6682e749fd8100bb272
 	
 	me.x = x;
 	me.y = y;
@@ -688,8 +691,13 @@ var KC = function(x, y) {
 	}
 	
 	function animationendHandler(e) {
+<<<<<<< HEAD
 		if (me.dir !== '' && !reversing) {
+			var cellInfo = maze.getCellInDir(me.x, me.y, me.dir);
+=======
+		if (me.dir !== '') {
 			cellInfo = maze.getCellInDir(me.x, me.y, me.dir);
+>>>>>>> 665eb7efaa1fe57cb6bde6682e749fd8100bb272
 			if (cellInfo) {
 				cellEl = cellInfo.cell;
 				me.x = cellInfo.x;
@@ -1577,8 +1585,12 @@ var game = new function () {
 		createDots();
 		createKC();
 		createDen();
+<<<<<<< HEAD
+		//createMunchers();
+=======
 		me.numMunchers = 3;
 		createMunchers();
+>>>>>>> 665eb7efaa1fe57cb6bde6682e749fd8100bb272
 		me.setLives();
 		me.dotSpeed = 3000;
 		me.setState('');
