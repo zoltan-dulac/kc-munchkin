@@ -398,8 +398,9 @@ td.letter-by-letter-animation {
 }
 
 .logo-container {
-	margin-top: -20vmin;
+	top: -20vmin;
 	height: 77vh;
+	position: relative;
 }
 
 #slide1-3, #slide1-4 {
@@ -436,6 +437,7 @@ td.letter-by-letter-animation {
 	transition: opacity 1500ms linear, transform 1500ms linear;
 	color: #D92A27;
 	margin-top: -0.1vmin;
+	overflow: hidden;
 }
 
 .kc-munchkin-logo.animate {
