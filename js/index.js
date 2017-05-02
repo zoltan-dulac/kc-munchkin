@@ -665,7 +665,8 @@ var KC = function(x, y) {
 			case " ":
 				lastCmd = '';
 				isMoving = false;
-				stopTestTestTest(e);
+				//stopTestTestTest(e);
+				stop(e);
 				break;
 				
 		}
@@ -1578,7 +1579,7 @@ var game = new function () {
 		createKC();
 		createDen();
 		me.numMunchers = 3;
-		createMunchers();
+		//createMunchers();
 		me.setLives();
 		me.dotSpeed = 3000;
 		me.setState('');
