@@ -557,7 +557,9 @@ var KC = function(x, y) {
 		lastCmd,
 		isMoving = false,
 		isSoundPlaying = false,
-		cellInfo;
+		cellInfo,
+		isPaused = false,
+		animStartTime = null;
 	
 	me.x = x;
 	me.y = y;
@@ -626,6 +628,8 @@ var KC = function(x, y) {
 				lastCmd = 'e';
 				e.preventDefault();
 				break;
+			case " ":
+				pause(e);
 		}
 		
 		if (lastCmd !== '') {
@@ -662,7 +666,7 @@ var KC = function(x, y) {
 			me.dir = lastCmd;
 			if (lastCmd !== '') {
 				playSound();
-				
+				animStartTime = new Date().getTime();
 				me.el.classList.add('move', lastCmd);
 			}
 		} else {
@@ -709,6 +713,13 @@ var KC = function(x, y) {
 		game.sounds['kc-move'].stop();
 		lastCmd = ''; */
 		//me.el.style.animationPlayState='paused'; //classList.add('paused');
+	}
+	
+	function pause(e) {
+		e.preventDefault();
+		console.log('pausing');
+		var classList = me.el.classList;
+		classList.add('paused');
 	}
 	
 	function initGestures() {
@@ -1517,7 +1528,7 @@ var game = new function () {
 		createDots();
 		createKC();
 		createDen();
-		me.numMunchers = 3;
+		me.numMunchers = 0;
 		createMunchers();
 		me.setLives();
 		me.dotSpeed = 3000;
