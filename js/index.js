@@ -639,10 +639,12 @@ var KC = function(x, y) {
 	}
 	
 	function moveHelper(e, key) {
-		console.log('moveHelper', e, key);
+		console.log('moveHelper', key, isMoving );
 		
-		if (key !== ' ') {
-			me.el.style.transform = '';
+		if (key.indexOf('Arrow') !== -1 && !isMoving) {
+			console.log('wtf')
+			isMoving = true;
+			game.sounds['kc-move'].play();
 		}
 		
 		switch (key) {
@@ -664,13 +666,14 @@ var KC = function(x, y) {
 				break;
 			case " ":
 				lastCmd = '';
-				isMoving = false;
-				//stopTestTestTest(e);
-				stop(e);
+				
+				// pause logic
+				pause(e);
+				//stop(e);
 				break;
 				
 		}
-		
+		console.log('bar');
 		if (lastCmd !== '') {
 			if (isMoving) {
 				if (me.dir === game.oppositeDir(lastCmd)) {
@@ -753,6 +756,7 @@ var KC = function(x, y) {
 		
 	}
 	
+	// This can probably be removed.
 	function stopTestTestTest(e) {
 		e.preventDefault();
 		var transform = document.defaultView.getComputedStyle(me.el, null).transform;
@@ -764,11 +768,12 @@ var KC = function(x, y) {
 		//me.el.style.animationPlayState='paused'; //classList.add('paused');
 	}
 	
-	function stop(e) {
+	function pause(e) {
 		e.preventDefault();
-		/* me.el.classList.remove('move', 'n', 's', 'e', 'w');	
 		game.sounds['kc-move'].stop();
-		lastCmd = ''; */
+		isMoving = false;
+		me.el.classList.add('paused');
+		
 		//me.el.style.animationPlayState='paused'; //classList.add('paused');
 	}
 	
