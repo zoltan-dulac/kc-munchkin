@@ -191,11 +191,8 @@ td.letter-by-letter-animation {
 	
 	transform: translate3d(0, 0, 0);
 	will-change: transform;
+	transition: transform linear 500ms;
 	
-	animation-timing-function: linear;
-	animation-duration: 500ms;
-	animation-fill-mode: forwards;
-	/* transition: transform linear 250ms; */
 }
 
 .player.paused {
@@ -230,20 +227,20 @@ td.letter-by-letter-animation {
 
 /* Moving */
 .player.w {
-	animation-name: go-west;
+	transform: translate3d(calc(-120vmin / 9), 0, 0);
 }
 
 
 .player.e {
-	animation-name: go-east;
+	transform: translate3d(calc(120vmin / 9 ), 0, 0);
 }
 
 .player.n {
-	animation-name: go-north;
+	transform: translate3d(0, calc(-120vmin / 9 ), 0);
 }
 
 .player.s {
-	animation-name: go-south;
+	transform: translate3d(0, calc(120vmin / 9 ), 0);
 }
 
 .player.dot {

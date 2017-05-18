@@ -643,7 +643,8 @@ var KC = function(x, y) {
 		//me.el.className = 'kc move ' + me.dir;
 	}
 	
-	function animationendHandler(e) {
+	function transitionendHandler(e) {
+		console.log('xxx');
 		if (me.dir !== '') {
 			cellInfo = maze.getCellInDir(me.x, me.y, me.dir);
 			if (cellInfo) {
@@ -728,7 +729,7 @@ var KC = function(x, y) {
 		window.addEventListener('keydown', move);
 		window.addEventListener('keyup', stop);
 		initGestures();
-		me.el.addEventListener('animationend', animationendHandler);
+		me.el.addEventListener('transitionend', transitionendHandler);
 	}
 	
 	init();
