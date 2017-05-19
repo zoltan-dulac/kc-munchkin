@@ -559,6 +559,7 @@ var KC = function(x, y) {
 		isSoundPlaying = false,
 		cellInfo,
 		isPaused = false,
+		isBackingUp = false,
 		animStartTime = null;
 	
 	me.x = x;
@@ -574,14 +575,14 @@ var KC = function(x, y) {
 	angleKeyMapping[270] = 'ArrowDown';
 	
 	function playSound() {
-		if (!isSoundPlaying) {
-			game.sounds['kc-move'].play();
+		if (window.Howl && !isSoundPlaying) {
+			window.Howl && game.sounds['kc-move'].play();
 			isSoundPlaying = true;
 		}
 	}
 	
 	function stopSound() {
-		game.sounds['kc-move'].pause();
+		window.Howl && game.sounds['kc-move'].pause();
 		isSoundPlaying = false;
 	}
 	
@@ -605,12 +606,12 @@ var KC = function(x, y) {
 	}
 
 	function move(e) {
-		console.log(e, e.key)
 		moveHelper(e, e.key || ('Arrow' + e.keyIdentifier));
 	}
 	
 	function moveHelper(e, key) {
-		//me.el.style.animationPlayState=''; //me.el.classList.remove('paused');
+		// ZOLTAN
+		var cmdBeforeLast = lastCmd;
 		switch (key) {
 			case "ArrowDown":
 				lastCmd = 's';
@@ -631,13 +632,13 @@ var KC = function(x, y) {
 			case " ":
 				pause(e);
 		}
-		
+		console.log('x', lastCmd, isMoving);
 		if (lastCmd !== '') {
-			if (isMoving) {
-				
-			} else {
+			if (!isMoving || (key !== ' ' && isPaused)) {
 				isMoving = true;
-				go();
+				// pass go() the flag to see if it is going in the reverse direction.
+				console.log('reverse:', cmdBeforeLast, lastCmd, cmdBeforeLast === game.oppositeDir(lastCmd));
+				go(cmdBeforeLast === game.oppositeDir(lastCmd));
 			}
 		}
 		
@@ -645,6 +646,9 @@ var KC = function(x, y) {
 	}
 	
 	function animationendHandler(e) {
+		pause();
+		isBackingUp = false;
+		me.el.classList.remove('reverse');
 		if (me.dir !== '') {
 			cellInfo = maze.getCellInDir(me.x, me.y, me.dir);
 			if (cellInfo) {
@@ -660,18 +664,33 @@ var KC = function(x, y) {
 		}
 	}
 	
-	function go() {
-		var cellInfo = maze.getCell(me.x, me.y);
-		if (cellInfo.classList.contains(lastCmd)) {
-			me.dir = lastCmd;
-			if (lastCmd !== '') {
-				playSound();
-				animStartTime = new Date().getTime();
-				me.el.classList.add('move', lastCmd);
+	function go(doReverse) {
+		var classList = me.el.classList;
+		unpause();
+		// ZOLTAN
+		if (doReverse) {
+			console.log('reversing');
+			isBackingUp = !isBackingUp;
+			if (isBackingUp) {
+				classList.add('reverse');
+			} else {
+				classList.remove('reverse');
 			}
-		} else {
-			stopSound();
-			isMoving = false;
+		}
+		
+		if (!isBackingUp) {
+			var cellInfo = maze.getCell(me.x, me.y);
+			if (cellInfo.classList.contains(lastCmd)) {
+				me.dir = lastCmd;
+				if (lastCmd !== '') {
+					playSound();
+					animStartTime = new Date().getTime();
+					classList.add('move', lastCmd);
+				}
+			} else {
+				stopSound();
+				isMoving = false;
+			}
 		}
 	}
 	
@@ -716,10 +735,19 @@ var KC = function(x, y) {
 	}
 	
 	function pause(e) {
-		e.preventDefault();
-		console.log('pausing');
+		isPaused = true;
+		e && e.preventDefault();
+		//console.log('pausing');
 		var classList = me.el.classList;
 		classList.add('paused');
+	}
+	
+	function unpause(e) {
+		//console.log('unpaused');
+		isPaused = false;
+		e && e.preventDefault();
+		var classList = me.el.classList;
+		classList.remove('paused');
 	}
 	
 	function initGestures() {
@@ -735,7 +763,7 @@ var KC = function(x, y) {
 		
 		window.addEventListener('keydown', move);
 		window.addEventListener('keyup', stop);
-		initGestures();
+		//initGestures();
 		me.el.addEventListener('animationend', animationendHandler);
 	}
 	
@@ -1074,13 +1102,17 @@ var preloader = new function () {
 			
 			for (i=0; i<preloadSounds.length; i++) {
 				var file = preloadSounds[i];
-				game.sounds[file] = new Howl({
-					autoplay: (i === 'kc-move'),
-					src: ['sounds/' + file + '.wav'],
-					loop: (i === 'kc-move'),
-					onload: assetLoadHandler,
-					onloaderror: assetErrorHandler,
-				});
+				
+				// Don't execute if Howl lib not loaded.
+				if (window.Howl) {
+					game.sounds[file] = new Howl({
+						autoplay: (i === 'kc-move'),
+						src: ['sounds/' + file + '.wav'],
+						loop: (i === 'kc-move'),
+						onload: assetLoadHandler,
+						onloaderror: assetErrorHandler,
+					});
+				}
 			}
 		}
 }
@@ -1191,7 +1223,7 @@ var game = new function () {
 		if (!keepScore) {
 			me.setScore(0);
 		}
-		game.sounds['kc-move'].pause();
+		window.Howl && game.sounds['kc-move'].pause();
 	}
 	
 	me.reset = function (keepScore) {
@@ -1417,12 +1449,12 @@ var game = new function () {
 						numActiveDots --;
 						
 						if (playerOnTop.el.classList.contains('pill')) {
-							game.sounds['eat-pill'].play();
+							window.Howl && game.sounds['eat-pill'].play();
 							me.setScore(50, true);
 							me.setState('pill-eaten');
 							setMunchersEdibility(true);
 						} else {
-							game.sounds['eat-dot'].play();
+							window.Howl && game.sounds['eat-dot'].play();
 							me.setScore(10, true);
 						}
 						me.dotSpeed -= 250;
@@ -1449,7 +1481,7 @@ var game = new function () {
 				break;
 			case 'pill-wearing-out':
 				clearTimeout(stateTimeout);
-				me.sounds['warning'].play();
+				window.Howl && me.sounds['warning'].play();
 				stateTimeout = setTimeout(function() {
 					me.setState('');
 				}, 2000);
@@ -1537,10 +1569,12 @@ var game = new function () {
 	}
 	
 	function initSounds() {
-		me.sounds['kc-move'].loop(true);
-		me.sounds['kc-move'].play();
-		me.sounds['kc-move'].pause();
-		me.sounds['kc-move'].volume(0.1);
+		if (window.Howl) {
+			me.sounds['kc-move'].loop(true);
+			me.sounds['kc-move'].play();
+			me.sounds['kc-move'].pause();
+			me.sounds['kc-move'].volume(0.1);
+		}
 	}
 	
 	me.initHelper = function () {
