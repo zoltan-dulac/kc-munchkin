@@ -203,10 +203,6 @@ td.letter-by-letter-animation {
 	animation-play-state: paused;
 }
 
-.player.reverse {
-	animation-direction: reverse;
-}
-
 .player:before {
 	content: "";
 	position: absolute;
@@ -234,20 +230,23 @@ td.letter-by-letter-animation {
 }
 
 /* Moving */
-.player.w {
+.player.w,
+.player.e.reverse {
 	animation-name: go-west;
 }
 
-
-.player.e {
+.player.e,
+.player.w.reverse {
 	animation-name: go-east;
 }
 
-.player.n {
+.player.n,
+.player.s.reverse {
 	animation-name: go-north;
 }
 
-.player.s {
+.player.s,
+.player.n.reverse {
 	animation-name: go-south;
 }
 

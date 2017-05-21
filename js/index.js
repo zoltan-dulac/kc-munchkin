@@ -685,7 +685,7 @@ var KC = function(x, y) {
 	function setReversePosition(time) {
 		console.log('before', me.el.style.animationDelay);
 		var actualDir = isBackingUp ? game.oppositeDir(me.dir) : me.dir,
-			delayTime = isBackingUp ? `${time}ms` : `${-time}ms`;
+			delayTime = `${-time}ms`; //isBackingUp ? `${time}ms` : `${-time}ms`;
 		requestAnimationFrame(function() {
 			me.el.style.setProperty('animation-delay', delayTime, 'important');
 			console.log('done', me.el.style.animationDelay);
