@@ -199,9 +199,14 @@ var maze = new function () {
 					x: x + 1,
 					y: y
 				};
+			default:
+				return {
+					cell: me.getCell(x, y),
+					x: x,
+					y: y
+				};
 				
 		}
-		return null;
 	}
 	
 	/*
@@ -633,24 +638,37 @@ var KC = function(x, y) {
 				pause(e);
 		}
 		console.log('x', lastCmd, isMoving);
+		
+		// Check to see if we gave a command.
 		if (lastCmd !== '') {
-			if (!isMoving || (key !== ' ' && isPaused)) {
+			
+			// If we are moving, then we check if we reversed.  If so, reverse right
+			// away.
+			if (isMoving) {
+				if (cmdBeforeLast === game.oppositeDir(lastCmd)) {
+					go(true);
+				}
+			// Otherwise, we check if we are not moving.  If so then we change the 
+			// direction right away.
+			} else if (!isMoving || (key !== ' ' && isPaused)) {
 				isMoving = true;
-				// pass go() the flag to see if it is going in the reverse direction.
-				console.log('reverse:', cmdBeforeLast, lastCmd, cmdBeforeLast === game.oppositeDir(lastCmd));
-				go(cmdBeforeLast === game.oppositeDir(lastCmd));
+				go(false);
 			}
+			
+			// Note that is we are moving, the change of direction will be handled
+			// by the `animationendHandler()` method.  We don't do that here.
 		}
 		
 		//me.el.className = 'kc move ' + me.dir;
 	}
 	
 	function animationendHandler(e) {
+		var dir = isBackingUp ? '' : me.dir;
 		pause();
 		isBackingUp = false;
 		me.el.classList.remove('reverse');
 		if (me.dir !== '') {
-			cellInfo = maze.getCellInDir(me.x, me.y, me.dir);
+			cellInfo = maze.getCellInDir(me.x, me.y, dir);
 			if (cellInfo) {
 				cellEl = cellInfo.cell;
 				me.x = cellInfo.x;
@@ -664,19 +682,36 @@ var KC = function(x, y) {
 		}
 	}
 	
+	function setReversePosition(time) {
+		var actualDir = isBackingUp ? game.oppositeDir(me.dir) : me.dir;
+		console.log('reversing',  me.el.style.animationDelay);
+		me.el.style.animationDelay = `${-time}ms`;
+		console.log('done', me.el.style.animationDelay);
+	}
+	
 	function go(doReverse) {
-		var classList = me.el.classList;
-		unpause();
+		var classList = me.el.classList,
+			now;
+		
 		// ZOLTAN
 		if (doReverse) {
-			console.log('reversing');
+			// We need to figure out what percentage of the animation we were in
+			now = new Date().getTime();
+			
+			var reverseTime = (now - animStartTime);
 			isBackingUp = !isBackingUp;
 			if (isBackingUp) {
 				classList.add('reverse');
 			} else {
 				classList.remove('reverse');
 			}
+			setReversePosition(reverseTime);
+			
+		} else {
+			me.el.style.animationDelay = '';
 		}
+		
+		unpause();
 		
 		if (!isBackingUp) {
 			var cellInfo = maze.getCell(me.x, me.y);

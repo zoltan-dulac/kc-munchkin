@@ -195,6 +195,7 @@ td.letter-by-letter-animation {
 	animation-timing-function: linear;
 	animation-duration: 500ms;
 	animation-fill-mode: forwards;
+	animation-delay: 0ms;
 	/* transition: transform linear 250ms; */
 }
 
@@ -360,15 +361,22 @@ td.letter-by-letter-animation {
 	visibility: hidden;
 }
 
-.kc.e:after {
+.kc.e.reverse:after {
+	transform: translateZ(0);
+}
+
+.kc.e:after,
+.kc.w.reverse:after {
 	transform: scaleX(-1);
 }
 
-.kc.n:after {
+.kc.n:after,
+.kc.s.reverse:after {
 	transform: rotate(90deg);
 }
 
-.kc.s:after {
+.kc.s:after,
+.kc.n.reverse:after {
 	transform: scaleX(-1) rotate(-90deg);
 }
 
