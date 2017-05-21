@@ -683,10 +683,14 @@ var KC = function(x, y) {
 	}
 	
 	function setReversePosition(time) {
-		var actualDir = isBackingUp ? game.oppositeDir(me.dir) : me.dir;
-		console.log('reversing',  me.el.style.animationDelay);
-		me.el.style.animationDelay = `${-time}ms`;
-		console.log('done', me.el.style.animationDelay);
+		console.log('before', me.el.style.animationDelay);
+		var actualDir = isBackingUp ? game.oppositeDir(me.dir) : me.dir,
+			delayTime = isBackingUp ? `${time}ms` : `${-time}ms`;
+		requestAnimationFrame(function() {
+			me.el.style.setProperty('animation-delay', delayTime, 'important');
+			console.log('done', me.el.style.animationDelay);
+		})
+		
 	}
 	
 	function go(doReverse) {
@@ -699,6 +703,7 @@ var KC = function(x, y) {
 			now = new Date().getTime();
 			
 			var reverseTime = (now - animStartTime);
+			animStartTime = now;
 			isBackingUp = !isBackingUp;
 			if (isBackingUp) {
 				classList.add('reverse');
