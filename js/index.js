@@ -781,8 +781,10 @@ var KC = function(x, y) {
 	}
 	
 	me.die = function () {
+		var currentTransform = document.defaultView.getComputedStyle(me.el, null).transform;
 		me.el.addEventListener('animationend', me.reincarnate);
-		me.el.classList.remove('n', 's', 'e', 'w');
+		me.el.classList.remove('n', 's', 'e', 'w', 'reverse');
+		me.el.style.transform = currentTransform;
 		me.el.classList.add('die');
 		stopSound();
 		isSoundPlaying=false;
@@ -998,6 +1000,7 @@ var Muncher = function (x, y, dir, speed, index) {
 	
 	me.die = function () {
 		var classList = me.el.classList;
+			
 		me.setEdible(false);
 		classList.add('eaten');
 		game.sounds['muncher-eaten'].play();
