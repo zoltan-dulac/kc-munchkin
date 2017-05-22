@@ -565,7 +565,10 @@ var KC = function(x, y) {
 		cellInfo,
 		isPaused = false,
 		isBackingUp = false,
-		animStartTime = null;
+		animStartTime = null,
+		reverseTime,
+		timeDelta = 0,
+		animationDuration = null;
 	
 	me.x = x;
 	me.y = y;
@@ -637,7 +640,7 @@ var KC = function(x, y) {
 			case " ":
 				pause(e);
 		}
-		console.log('x', lastCmd, isMoving);
+		game.log('x', lastCmd, isMoving);
 		
 		// Check to see if we gave a command.
 		if (lastCmd !== '') {
@@ -666,6 +669,8 @@ var KC = function(x, y) {
 		var dir = isBackingUp ? '' : me.dir;
 		pause();
 		isBackingUp = false;
+		timeDelta = 0;
+		reverseTime = 0;
 		me.el.classList.remove('reverse');
 		if (me.dir !== '') {
 			cellInfo = maze.getCellInDir(me.x, me.y, dir);
@@ -683,12 +688,20 @@ var KC = function(x, y) {
 	}
 	
 	function setReversePosition(time) {
-		console.log('before', me.el.style.animationDelay);
+		game.log('before', me.el.style.animationDelay);
 		var actualDir = isBackingUp ? game.oppositeDir(me.dir) : me.dir,
-			delayTime = isBackingUp ? `${time}ms` : `${-time}ms`;
+			delayTime = `-${time}ms`; //isBackingUp ? `${-time}ms` : `${time}ms`,
+			elStyle = me.el.style;
 		requestAnimationFrame(function() {
-			me.el.style.setProperty('animation-delay', delayTime, 'important');
-			console.log('done', me.el.style.animationDelay);
+			elStyle.setProperty('display', 'none');
+			elStyle.setProperty('animation-name', 'fake-animation-name', 'important');
+			requestAnimationFrame(function() {
+				elStyle.removeProperty('animation-name');
+				elStyle.removeProperty('display');
+				elStyle.setProperty('animation-delay', delayTime, 'important');
+			})
+			
+			game.log('done', delayTime);
 		})
 		
 	}
@@ -702,16 +715,31 @@ var KC = function(x, y) {
 			// We need to figure out what percentage of the animation we were in
 			now = new Date().getTime();
 			
-			var reverseTime = (now - animStartTime);
-			animStartTime = now;
 			isBackingUp = !isBackingUp;
+			if (timeDelta === 0) {
+				reverseTime = (now - animStartTime);
+				timeDelta = reverseTime;
+				game.log('INIT', timeDelta);
+			} else {
+				if (isBackingUp) {
+					timeDelta = now + (reverseTime + timeDelta);
+					game.log('TRUE', timeDelta);
+				} else {
+					timeDelta = now - (reverseTime - timeDelta);
+					game.log('FALSE', timeDelta);
+				}
+			}
+			
+			reverseTime = now;
+			
 			if (isBackingUp) {
 				classList.add('reverse');
 			} else {
 				classList.remove('reverse');
 			}
-			setReversePosition(reverseTime);
-			
+			setReversePosition(animationDuration - timeDelta);
+			unpause();
+			return;
 		} else {
 			me.el.style.animationDelay = '';
 		}
@@ -777,13 +805,13 @@ var KC = function(x, y) {
 	function pause(e) {
 		isPaused = true;
 		e && e.preventDefault();
-		//console.log('pausing');
+		//game.log('pausing');
 		var classList = me.el.classList;
 		classList.add('paused');
 	}
 	
 	function unpause(e) {
-		//console.log('unpaused');
+		//game.log('unpaused');
 		isPaused = false;
 		e && e.preventDefault();
 		var classList = me.el.classList;
@@ -805,6 +833,7 @@ var KC = function(x, y) {
 		window.addEventListener('keyup', stop);
 		//initGestures();
 		me.el.addEventListener('animationend', animationendHandler);
+		animationDuration = parseFloat(document.defaultView.getComputedStyle(me.el, null).animationDuration)*1000;
 	}
 	
 	init();
@@ -1311,7 +1340,7 @@ var game = new function () {
 		var i;
 		
 		for (i=0; i<me.numMunchers; i++) {
-			console.log(350 + 100 * i);
+			game.log(350 + 100 * i);
 			me.munchers[i] = new Muncher(5 , 5, 'n', 450 + 50 * i, i);
 		}
 		
@@ -1600,7 +1629,7 @@ var game = new function () {
 		createDots();
 		createKC();
 		createDen();
-		me.numMunchers = 0;
+		me.numMunchers = 3;
 		createMunchers();
 		me.setLives();
 		me.dotSpeed = 3000;
@@ -1622,6 +1651,10 @@ var game = new function () {
 		bonusDisplayEl.addEventListener('animationend', bonusDisplayAnimationEnd);
 		initSounds();
 		setTimeout(demo.start, 500);
+	}
+	
+	me.log = function () {
+		//console.log(arguments);
 	}
 	
 	me.init = function () {
