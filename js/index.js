@@ -4,6 +4,9 @@
  * Use goog.require('goog.structs.PriorityQueue'); and new goog.structs.PriorityQueue()
  * 
  * Code from https://github.com/mburst/dijkstras-algorithm
+ * 
+ * Idea for music: http://plnkr.co/edit/se2OIUBRxZsa3lUPtOJp?p=preview
+ * https://www.sheetmusicdirect.com/se/ID_No/117773/Product.aspx
  */
 function PriorityQueue () {
   this._nodes = [];
