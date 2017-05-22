@@ -568,7 +568,8 @@ var KC = function(x, y) {
 		animStartTime = null,
 		reverseTime,
 		timeDelta = 0,
-		animationDuration = null;
+		animationDuration = null,
+		canGoInNextCell  = true;
 	
 	me.x = x;
 	me.y = y;
@@ -640,7 +641,20 @@ var KC = function(x, y) {
 			case " ":
 				pause(e);
 		}
-		game.log('x', lastCmd, isMoving);
+		
+		// hack to deal when KC gets stuck in the edge case of moving back and forth
+		// a lot
+		var classList = me.el.classList;
+		if (!(
+			me.el.classList.contains('w') ||
+			me.el.classList.contains('e') ||
+			me.el.classList.contains('s') ||
+			me.el.classList.contains('n')
+		)) {
+			isMoving = false;
+			isBackingUp = false;
+		}
+		
 		
 		// Check to see if we gave a command.
 		if (lastCmd !== '') {
@@ -649,13 +663,17 @@ var KC = function(x, y) {
 			// away.
 			if (isMoving) {
 				if (cmdBeforeLast === game.oppositeDir(lastCmd)) {
-					go(true);
+					requestAnimationFrame(function () {
+						go(true);
+					});
 				}
 			// Otherwise, we check if we are not moving.  If so then we change the 
 			// direction right away.
 			} else if (!isMoving || (key !== ' ' && isPaused)) {
 				isMoving = true;
-				go(false);
+				requestAnimationFrame(function () {
+					go(false);
+				});
 			}
 			
 			// Note that is we are moving, the change of direction will be handled
@@ -666,11 +684,15 @@ var KC = function(x, y) {
 	}
 	
 	function animationendHandler(e) {
+		if (!canGoInNextCell) {
+			return;
+		}
 		var dir = isBackingUp ? '' : me.dir;
 		pause();
 		isBackingUp = false;
 		timeDelta = 0;
 		reverseTime = 0;
+		animStartTime = new Date().getTime();
 		me.el.classList.remove('reverse');
 		if (me.dir !== '') {
 			cellInfo = maze.getCellInDir(me.x, me.y, dir);
@@ -688,25 +710,22 @@ var KC = function(x, y) {
 	}
 	
 	function setReversePosition(time) {
-		game.log('before', me.el.style.animationDelay);
+		canGoInNextCell = false;
 		var actualDir = isBackingUp ? game.oppositeDir(me.dir) : me.dir,
 			delayTime = `-${time}ms`; //isBackingUp ? `${-time}ms` : `${time}ms`,
 			elStyle = me.el.style;
+		elStyle.setProperty('display', 'none');
+		elStyle.setProperty('animation-name', 'fake-animation-name', 'important');
 		requestAnimationFrame(function() {
-			elStyle.setProperty('display', 'none');
-			elStyle.setProperty('animation-name', 'fake-animation-name', 'important');
-			requestAnimationFrame(function() {
-				elStyle.removeProperty('animation-name');
-				elStyle.removeProperty('display');
-				elStyle.setProperty('animation-delay', delayTime, 'important');
-			})
-			
-			game.log('done', delayTime);
+			elStyle.removeProperty('animation-name');
+			elStyle.removeProperty('display');
+			elStyle.setProperty('animation-delay', delayTime, 'important');
+			canGoInNextCell = true;
 		})
-		
 	}
 	
 	function go(doReverse) {
+		canGoInNextCell = false;
 		var classList = me.el.classList,
 			now;
 		
@@ -719,14 +738,11 @@ var KC = function(x, y) {
 			if (timeDelta === 0) {
 				reverseTime = (now - animStartTime);
 				timeDelta = reverseTime;
-				game.log('INIT', timeDelta);
 			} else {
 				if (isBackingUp) {
 					timeDelta = now + (reverseTime + timeDelta);
-					game.log('TRUE', timeDelta);
 				} else {
 					timeDelta = now - (reverseTime - timeDelta);
-					game.log('FALSE', timeDelta);
 				}
 			}
 			
@@ -745,7 +761,7 @@ var KC = function(x, y) {
 		}
 		
 		unpause();
-		
+		me.el.classList.remove('reverse');
 		if (!isBackingUp) {
 			var cellInfo = maze.getCell(me.x, me.y);
 			if (cellInfo.classList.contains(lastCmd)) {
@@ -760,6 +776,8 @@ var KC = function(x, y) {
 				isMoving = false;
 			}
 		}
+		
+		canGoInNextCell = true;
 	}
 	
 	me.die = function () {
@@ -805,13 +823,10 @@ var KC = function(x, y) {
 	function pause(e) {
 		isPaused = true;
 		e && e.preventDefault();
-		//game.log('pausing');
 		var classList = me.el.classList;
-		classList.add('paused');
 	}
 	
 	function unpause(e) {
-		//game.log('unpaused');
 		isPaused = false;
 		e && e.preventDefault();
 		var classList = me.el.classList;
@@ -1340,7 +1355,6 @@ var game = new function () {
 		var i;
 		
 		for (i=0; i<me.numMunchers; i++) {
-			game.log(350 + 100 * i);
 			me.munchers[i] = new Muncher(5 , 5, 'n', 450 + 50 * i, i);
 		}
 		
@@ -1653,9 +1667,7 @@ var game = new function () {
 		setTimeout(demo.start, 500);
 	}
 	
-	me.log = function () {
-		//console.log(arguments);
-	}
+	me.log = console.log
 	
 	me.init = function () {
 		preloader.init(me.initHelper);
