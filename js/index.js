@@ -647,7 +647,7 @@ var KC = function(x, y) {
 		
 		// hack to deal when KC gets stuck in the edge case of moving back and forth
 		// a lot
-		var classList = me.el.classList;
+		/* var classList = me.el.classList;
 		if (!(
 			me.el.classList.contains('w') ||
 			me.el.classList.contains('e') ||
@@ -656,7 +656,7 @@ var KC = function(x, y) {
 		)) {
 			isMoving = false;
 			isBackingUp = false;
-		}
+		} */
 		
 		
 		// Check to see if we gave a command.
@@ -713,6 +713,7 @@ var KC = function(x, y) {
 	}
 	
 	function setReversePosition(time) {
+		console.log('reverse', isBackingUp, time);
 		canGoInNextCell = false;
 		var actualDir = isBackingUp ? game.oppositeDir(me.dir) : me.dir,
 			delayTime = `-${time}ms`; //isBackingUp ? `${-time}ms` : `${time}ms`,
@@ -743,10 +744,13 @@ var KC = function(x, y) {
 				timeDelta = reverseTime;
 			} else {
 				if (isBackingUp) {
-					timeDelta = now + (reverseTime + timeDelta);
+					console.log('TRUE', now, reverseTime, timeDelta);
+					timeDelta = now - reverseTime + timeDelta;
 				} else {
+					console.log('FALSE', now, reverseTime, timeDelta);
 					timeDelta = now - (reverseTime - timeDelta);
 				}
+				console.log('---> ', timeDelta);
 			}
 			
 			reverseTime = now;
@@ -756,7 +760,7 @@ var KC = function(x, y) {
 			} else {
 				classList.remove('reverse');
 			}
-			setReversePosition(animationDuration - timeDelta);
+			setReversePosition(isBackingUp ? animationDuration - timeDelta : timeDelta);
 			unpause();
 			return;
 		} else {
@@ -1649,7 +1653,7 @@ var game = new function () {
 		createDots();
 		createKC();
 		createDen();
-		me.numMunchers = 3;
+		me.numMunchers = 0;
 		createMunchers();
 		me.setLives();
 		me.dotSpeed = 3000;
