@@ -714,14 +714,16 @@ var KC = function(x, y) {
 		var actualDir = isBackingUp ? game.oppositeDir(me.dir) : me.dir,
 			delayTime = `-${time}ms`; //isBackingUp ? `${-time}ms` : `${time}ms`,
 			elStyle = me.el.style;
-		elStyle.setProperty('display', 'none');
-		elStyle.setProperty('animation-name', 'fake-animation-name', 'important');
 		requestAnimationFrame(function() {
-			elStyle.removeProperty('animation-name');
-			elStyle.removeProperty('display');
-			elStyle.setProperty('animation-delay', delayTime, 'important');
-			canGoInNextCell = true;
-		})
+			elStyle.setProperty('display', 'none');
+			elStyle.setProperty('animation-name', 'fake-animation-name', 'important');
+			requestAnimationFrame(function() {
+				elStyle.removeProperty('animation-name');
+				elStyle.removeProperty('display');
+				elStyle.setProperty('animation-delay', delayTime, 'important');
+				canGoInNextCell = true;
+			});
+		});
 	}
 	
 	function go(doReverse) {
