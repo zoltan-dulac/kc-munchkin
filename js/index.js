@@ -570,9 +570,11 @@ var KC = function(x, y) {
 		isBackingUp = false,
 		animStartTime = null,
 		reverseTime,
-		timeDelta = 0,
+		timeDelta = null,
 		animationDuration = null,
-		canGoInNextCell  = true;
+		canGoInNextCell  = true,
+		animationBeginThreshold = null,
+		animationEndThreshold = null;
 	
 	me.x = x;
 	me.y = y;
@@ -693,7 +695,7 @@ var KC = function(x, y) {
 		var dir = isBackingUp ? '' : me.dir;
 		pause();
 		isBackingUp = false;
-		timeDelta = 0;
+		timeDelta = null;
 		reverseTime = 0;
 		animStartTime = new Date().getTime();
 		me.el.classList.remove('reverse');
@@ -717,9 +719,16 @@ var KC = function(x, y) {
 		canGoInNextCell = false;
 		var actualDir = isBackingUp ? game.oppositeDir(me.dir) : me.dir,
 			delayTime = `-${time}ms`; //isBackingUp ? `${-time}ms` : `${time}ms`,
-			elStyle = me.el.style;
+			elStyle = me.el.style,
+			classList = me.el.classList;
 		elStyle.setProperty('display', 'none');
 		elStyle.setProperty('animation-name', 'fake-animation-name', 'important');
+		
+		if (isBackingUp) {
+			classList.add('reverse');
+		} else {
+			classList.remove('reverse');
+		}
 		requestAnimationFrame(function() {
 			elStyle.removeProperty('animation-name');
 			elStyle.removeProperty('display');
@@ -739,28 +748,33 @@ var KC = function(x, y) {
 			now = new Date().getTime();
 			
 			isBackingUp = !isBackingUp;
-			if (timeDelta === 0) {
+			if (timeDelta === null) {
+				console.log('NULL');
 				reverseTime = (now - animStartTime);
 				timeDelta = reverseTime;
 			} else {
 				if (isBackingUp) {
 					console.log('TRUE', now, reverseTime, timeDelta);
-					timeDelta = now - reverseTime + timeDelta;
+					timeDelta = timeDelta - (reverseTime - now); //now - reverseTime + timeDelta;
 				} else {
 					console.log('FALSE', now, reverseTime, timeDelta);
-					timeDelta = now - (reverseTime - timeDelta);
+					timeDelta = timeDelta + (now - reverseTime); //now - reverseTime + timeDelta;
 				}
-				console.log('---> ', timeDelta);
 			}
+			console.log('---> ', timeDelta);
+			if (timeDelta > animationEndThreshold) {
+				isBackingUp = false;
+				me.dir = game.oppositeDir(me.dir);
+				console.log('aha!', me.dir);
+				animationendHandler();
+				return;
+			} /*else if (timeDelta < animationBeginThreshold) {
+				timeDelta = animationBeginThreshold;
+			} */
 			
 			reverseTime = now;
 			
-			if (isBackingUp) {
-				classList.add('reverse');
-			} else {
-				classList.remove('reverse');
-			}
-			setReversePosition(isBackingUp ? animationDuration - timeDelta : timeDelta);
+			setReversePosition( animationDuration - timeDelta);
 			unpause();
 			return;
 		} else {
@@ -858,6 +872,9 @@ var KC = function(x, y) {
 		//initGestures();
 		me.el.addEventListener('animationend', animationendHandler);
 		animationDuration = parseFloat(document.defaultView.getComputedStyle(me.el, null).animationDuration)*1000;
+		animationBeginThreshold = animationDuration * 0.01;
+		animationEndThreshold = animationDuration * 0.99
+		console.log('thresholds', animationBeginThreshold, animationEndThreshold)
 	}
 	
 	init();

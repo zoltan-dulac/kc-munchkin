@@ -193,7 +193,7 @@ td.letter-by-letter-animation {
 	will-change: transform;
 	
 	animation-timing-function: linear;
-	animation-duration: 500ms;
+	animation-duration: 1500ms;
 	animation-fill-mode: forwards;
 	animation-delay: 0ms;
 	/* transition: transform linear 250ms; */
