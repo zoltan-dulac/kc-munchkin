@@ -714,16 +714,16 @@ var KC = function(x, y) {
 		var actualDir = isBackingUp ? game.oppositeDir(me.dir) : me.dir,
 			delayTime = `-${time}ms`; //isBackingUp ? `${-time}ms` : `${time}ms`,
 			elStyle = me.el.style;
-		requestAnimationFrame(function() {
+		//requestAnimationFrame(function() {
 			elStyle.setProperty('display', 'none');
 			elStyle.setProperty('animation-name', 'fake-animation-name', 'important');
 			requestAnimationFrame(function() {
+				elStyle.setProperty('animation-delay', delayTime, 'important');
 				elStyle.removeProperty('animation-name');
 				elStyle.removeProperty('display');
-				elStyle.setProperty('animation-delay', delayTime, 'important');
 				canGoInNextCell = true;
 			});
-		});
+		//});
 	}
 	
 	function go(doReverse) {
@@ -1195,7 +1195,7 @@ var preloader = new function () {
 				// Don't execute if Howl lib not loaded.
 				if (window.Howl) {
 					game.sounds[file] = new Howl({
-						autoplay: (i === 'kc-move'),
+						autoplay: false, //(i === 'kc-move'),
 						src: ['sounds/' + file + '.wav'],
 						loop: (i === 'kc-move'),
 						onload: assetLoadHandler,
@@ -1659,7 +1659,7 @@ var game = new function () {
 	function initSounds() {
 		if (window.Howl) {
 			me.sounds['kc-move'].loop(true);
-			me.sounds['kc-move'].play();
+			//me.sounds['kc-move'].play();
 			me.sounds['kc-move'].pause();
 			me.sounds['kc-move'].volume(0.1);
 		}
