@@ -1530,7 +1530,6 @@ var game = new function () {
 	
 	function initSounds() {
 		me.sounds['kc-move'].loop(true);
-		me.sounds['kc-move'].play();
 		me.sounds['kc-move'].pause();
 		me.sounds['kc-move'].volume(0.1);
 	}
