@@ -1,79 +1,3 @@
-/*
- * setTimeout, setInterval replacements using requestAnimationFrame by Joe Lambert
- * https://gist.github.com/joelambert/1002116
- */
-
-
-/**
- * Behaves the same as setInterval except uses requestAnimationFrame() 
- * @param {function} fn The callback function
- * @param {int} delay The delay in milliseconds
- */
-window.setRequestInterval = function(fn, delay) {
-		
-	var start = new Date().getTime(),
-		handle = new Object();
-		
-	function loop() {
-		var current = new Date().getTime(),
-			delta = current - start;
-			
-		if(delta >= delay) {
-			fn.call();
-			start = new Date().getTime();
-		}
-
-		handle.value = requestAnimationFrame(loop);
-	};
-	
-	handle.value = requestAnimationFrame(loop);
-	return handle;
-}
-
-/**
- * Behaves the same as clearInterval except uses cancelRequestAnimationFrame()
- * @param {int|object} fn The callback function
- */
-window.clearRequestInterval = function(handle) {
-	if (handle) { 
-		window.cancelAnimationFrame(handle.value);
-	}
-};
-
-/**
- * Behaves the same as setTimeout except uses requestAnimationFrame()
- * @param {function} fn The callback function
- * @param {int} delay The delay in milliseconds
- */
-
-window.setRequestTimeout = function(fn, delay) {		
-	var start = new Date().getTime(),
-		handle = new Object();
-		
-	function loop(){
-		var current = new Date().getTime(),
-			delta = current - start;
-			
-		delta >= delay ? fn.call() : handle.value = requestAnimationFrame(loop);
-	};
-	
-	handle.value = requestAnimationFrame(loop);
-	return handle;
-};
-
-/**
- * Behaves the same as clearTimeout except uses cancelRequestAnimationFrame()
- * @param {int|object} fn The callback function
- */
-window.clearRequestTimeout = function(handle) {
-	if (handle) {
-		window.cancelAnimationFrame(handle.value);
-	}
-};
-
-
-
-
 /**
  * Basic priority queue implementation. If a better priority queue is wanted/needed,
  * this code works with the implementation in google's closure library (https://code.google.com/p/closure-library/).
@@ -661,10 +585,6 @@ var KC = function(x, y) {
 	angleKeyMapping[90] = 'ArrowUp';
 	angleKeyMapping[180] = 'ArrowLeft';
 	angleKeyMapping[270] = 'ArrowDown';
-
-	me.isAtEndOfAnimation = function () {
-		return (me.el && me.el.classList.contains('end-of-animation'));
-	}
 	
 	function playSound() {
 		if (window.Howl && !isSoundPlaying) {
@@ -703,31 +623,21 @@ var KC = function(x, y) {
 	
 	function moveHelper(e, key) {
 		// ZOLTAN
-		console.log('wtf', e.key, key, e.keyIdentifier);
-
 		var cmdBeforeLast = lastCmd;
-		
-		/*
-		 * Edge has e.key set to just the direction without the "Arrow" string.
-		 */
 		switch (key) {
 			case "ArrowDown":
-			case "Down":
 				lastCmd = 's';
 				e.preventDefault();
 				break;
 			case "ArrowUp":
-			case "Up":
 				lastCmd = 'n';
 				e.preventDefault();
 				break;
 			case "ArrowLeft":
-			case "Left":
 				lastCmd = 'w';
 				e.preventDefault();
 				break;
 			case "ArrowRight":
-			case "Right":
 				lastCmd = 'e';
 				e.preventDefault();
 				break;
@@ -781,17 +691,12 @@ var KC = function(x, y) {
 			return;
 		}
 		var dir = isBackingUp ? '' : me.dir;
-		var elClass = me.el.classList;
-
 		pause();
 		isBackingUp = false;
 		timeDelta = 0;
 		reverseTime = 0;
 		animStartTime = new Date().getTime();
-
-		// If the animation ends, put this class in.  
-		elClass.add('end-of-animation');
-		elClass.remove('reverse');
+		me.el.classList.remove('reverse');
 		if (me.dir !== '') {
 			cellInfo = maze.getCellInDir(me.x, me.y, dir);
 			if (cellInfo) {
@@ -801,7 +706,6 @@ var KC = function(x, y) {
 				
 				requestAnimationFrame(function() {
 					maze.putInCell(me.el, cellInfo.x, cellInfo.y);
-					elClass.remove('end-of-animation');
 					go()
 				});
 			}
@@ -882,11 +786,8 @@ var KC = function(x, y) {
 	}
 	
 	me.die = function () {
-		console.log('dying');
-		document.body.removeEventListener('keydown', move);
-		document.body.removeEventListener('keyup', stop);
 		var currentTransform = document.defaultView.getComputedStyle(me.el, null).transform;
-		
+		me.el.addEventListener('animationend', me.reincarnate);
 		me.el.classList.remove('n', 's', 'e', 'w', 'reverse');
 		me.el.style.transform = currentTransform;
 		me.el.classList.add('die');
@@ -894,20 +795,13 @@ var KC = function(x, y) {
 		isSoundPlaying=false;
 		game.sounds['kc-die1'].play();
 		game.stopPlayers();
-		
-		/*
-		 * We originally had
-		 *    me.el.addEventListener('animationend', me.reincarnate);
-		 * and it worked for all browsers except IE/Edge, which can't
-		 * fire animationend events on pseudo-elements.  So we put in a
-		 * setRequestTimeout instead (which should be okay, since it is
-		 * using requestAnimationFrame()).
-		 */
-		setRequestTimeout(me.reincarnate, 1000);
+		window.removeEventListener('keydown', move);
+		window.removeEventListener('keyup', stop);
 		
 	}
 	
 	me.reincarnate = function () {
+		me.el.removeEventListener('animationend', me.reincarnate);
 		me.el.classList.remove('die');
 		me.el.classList.add('dead');
 		
@@ -956,9 +850,9 @@ var KC = function(x, y) {
 		me.el.className = 'kc player';
 		me.el.__player = me;
 		maze.putInCell(me.el, x, y);
-		console.log('init!');
-		document.body.addEventListener('keydown', move);
-		document.body.addEventListener('keyup', stop);
+		
+		window.addEventListener('keydown', move);
+		window.addEventListener('keyup', stop);
 		//initGestures();
 		me.el.addEventListener('animationend', animationendHandler);
 		animationDuration = parseFloat(document.defaultView.getComputedStyle(me.el, null).animationDuration)*1000;
@@ -989,7 +883,7 @@ var MuncherDen = function (x, y) {
 	}
 	
 	me.stop = function () {
-		clearRequestInterval(timeout);
+		clearInterval(timeout);
 	}
 	
 	function rotate() {
@@ -1001,7 +895,7 @@ var MuncherDen = function (x, y) {
 	function init() {
 		me.el = maze.getCell(x,y);
 		render();
-		timeout = setRequestInterval(rotate, 1000);
+		timeout = setInterval(rotate, 1000);
 	}
 	
 	init();
@@ -1124,12 +1018,12 @@ var Muncher = function (x, y, dir, speed, index) {
 	
 	function changeMode(mode) {
 		me.state = (me.state + 1) % 2;
-		modeTimeout = setRequestTimeout(changeMode, 10000);
+		modeTimeout = setTimeout(changeMode, 10000);
 	}
 	
 	me.teardown = function () {
 		if (modeTimeout) {
-			clearRequestTimeout(modeTimeout);
+			clearTimeout(modeTimeout);
 		}
 	}
 	
@@ -1145,7 +1039,7 @@ var Muncher = function (x, y, dir, speed, index) {
 		maze.putInCell(me.el, x, y);
 		requestAnimationFrame(go);
 		
-		modeTimeout = setRequestTimeout(changeMode, 10000);
+		modeTimeout = setTimeout(changeMode, 10000);
 		
 	}
 	
@@ -1161,17 +1055,14 @@ var demo = new function () {
 		kcDemoEl;
 	
 	me.start = function () {
-		document.body.addEventListener('keydown', keyDownClickEvent);
-		document.body.addEventListener('click', keyDownClickEvent);
-		document.body.addEventListener('touchstart', keyDownClickEvent);
+		window.addEventListener('keydown', keyDownClickEvent);
+		window.addEventListener('click', keyDownClickEvent);
+		window.addEventListener('touchstart', keyDownClickEvent);
 		bodyEl.className = 'demo-mode';
 		slide1();
 	}
 	
 	function keyDownClickEvent(e) {
-		document.body.removeEventListener('keydown', keyDownClickEvent);
-		document.body.removeEventListener('click', keyDownClickEvent);
-		document.body.removeEventListener('touchstart', keyDownClickEvent);
 		if (e.key === ' ' || e.type === 'click') {
 			e.preventDefault();
 			
@@ -1188,27 +1079,30 @@ var demo = new function () {
 					K.C. Munchkin<span class="sup">²</span>
 				</div>
 			</div>
-			<div id="slide1-3" class="slide">Press space to start</div>
+			<div id="slide1-3" class="slide"></div>
 			<div id="slide1-4" class="slide">
 				<div id="kc-demo" class="kc player move e"></div>
 			</div>
 		`;
-		me.showLetterByLetter(document.getElementById('slide1-1'), 'Useragentman presents', 0, 150, slide1a);
+		me.showLetterByLetter(document.getElementById('slide1-1'), 'Useragentman presents', 0, 100, slide1a);
 		
 		kcDemoEl = document.getElementById('kc-demo');
 		kcDemoEl.addEventListener('animationend', stopKC);
 	}
 	
 	function slide1a() {
-		logoContainer = document.getElementById('slide-1');
-		logoContainer.classList.add('pixelate-animation');
 		logoEl = document.getElementById('slide1-2');
-		//logoEl.addEventListener('transitionend', slide1b);
-		requestAnimationFrame( function () {
-			logoEl.className += ' animate';
-		})
+		logoEl.addEventListener('transitionend', slide1b);
+		logoEl.className += ' animate';
 	}
 	
+	function slide1b(e) {
+		
+		if (e.propertyName === 'opacity') {
+			me.showLetterByLetter(document.getElementById('slide1-3'), "Press Space To Start", 0, 100);
+		}
+		
+	}
 	
 	function stopKC(e) {
 		kcDemoEl.classList.remove('move', 'e');
@@ -1232,7 +1126,7 @@ var demo = new function () {
 			function () {
 				if (index < message.length) { 
 					targetEl.innerHTML += `<span class="char-${index}">${message[index++]}</span>`; 
-					setRequestTimeout(
+					setTimeout(
 						function () {
 							requestAnimationFrame(
 								function () {
@@ -1401,7 +1295,7 @@ var game = new function () {
 	
 	me.teardown = function (keepScore) {
 		var i;
-		clearRequestTimeout(stateTimeout);
+		clearTimeout(stateTimeout);
 		setMunchersEdibility(false);
 		me.den.stop();
 		delete(me.dots);
@@ -1413,7 +1307,7 @@ var game = new function () {
 		delete(me.kc);
 		delete(me.den);
 		
-		clearRequestInterval(collisionInterval);
+		clearInterval(collisionInterval);
 		me.dots = [];
 		me.munchers = new Array(3);
 		
@@ -1624,16 +1518,6 @@ var game = new function () {
 	}
 	
 	function detectCollisions() {
-
-			// if KC is at the end of a CSS animation, we don't check for 
-			// a collision.  This is because he is in a reversed state, he will
-			// appear to the browser in the cell he came from briefly, which
-			// is not perceptually correct. 
-			if (me.kc.isAtEndOfAnimation()) {
-				return;
-			}
-
-
 			var
 				playerOnTop = whatIsOnTopOf(me.kc),
 				i;
@@ -1680,21 +1564,21 @@ var game = new function () {
 		maze.setState(state);
 		switch(state){
 			case 'pill-eaten':
-				clearRequestTimeout(stateTimeout);
-				stateTimeout = setRequestTimeout(function() {
+				clearTimeout(stateTimeout);
+				stateTimeout = setTimeout(function() {
 					me.setState('pill-wearing-out');
 				}, 8000);
 				
 				break;
 			case 'pill-wearing-out':
-				clearRequestTimeout(stateTimeout);
+				clearTimeout(stateTimeout);
 				window.Howl && me.sounds['warning'].play();
-				stateTimeout = setRequestTimeout(function() {
+				stateTimeout = setTimeout(function() {
 					me.setState('');
 				}, 2000);
 				break;
 			case '':
-				clearRequestTimeout(stateTimeout);
+				clearTimeout(stateTimeout);
 				setMunchersEdibility(false);
 				break;
 			}
@@ -1737,7 +1621,7 @@ var game = new function () {
 	function showIntro(callback) {
 		overlayEl.className = '';
 		demo.showLetterByLetter(overlayEl, 'Ready Player 1', 0, 100, function () {
-			setRequestTimeout(function () {
+			setTimeout(function () {
 				overlayEl.innerHTML = '';
 				overlayEl.className = 'hidden';
 				callback();
@@ -1749,7 +1633,7 @@ var game = new function () {
 		me.setLives();
 		overlay.className = '';
 		demo.showLetterByLetter(overlayEl, 'Game Over', 0, 100, function () {
-			setRequestTimeout(function () {
+			setTimeout(function () {
 				
 				if (score > highScore) {
 					setHighScore(score);
@@ -1772,20 +1656,29 @@ var game = new function () {
 		me.setLives();
 		me.dotSpeed = 3000;
 		me.setState('');
-		collisionInterval = setRequestInterval(detectCollisionsInterval, 10);
+		collisionInterval = setInterval(detectCollisionsInterval, 10);
 	}
 	
 	function initSounds() {
+<<<<<<< HEAD
 		me.sounds['kc-move'].loop(true);
 		me.sounds['kc-move'].pause();
 		me.sounds['kc-move'].volume(0.1);
+=======
+		if (window.Howl) {
+			me.sounds['kc-move'].loop(true);
+			//me.sounds['kc-move'].play();
+			me.sounds['kc-move'].pause();
+			me.sounds['kc-move'].volume(0.1);
+		}
+>>>>>>> fix-reverse-bug-final
 	}
 	
 	me.initHelper = function () {
 		window.scrollTo(0, 1);
 		bonusDisplayEl.addEventListener('animationend', bonusDisplayAnimationEnd);
 		initSounds();
-		setRequestTimeout(demo.start, 500);
+		setTimeout(demo.start, 500);
 	}
 	
 	me.log = console.log

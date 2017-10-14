@@ -195,11 +195,17 @@ td.letter-by-letter-animation {
 	animation-timing-function: linear;
 	animation-duration: 500ms;
 	animation-fill-mode: forwards;
+	animation-delay: 0ms;
 	/* transition: transform linear 250ms; */
 }
 
+
 .player.paused {
 	animation-play-state: paused;
+}
+
+.player.reverse {
+	animation-direction: reverse;
 }
 
 .player:before {
@@ -345,6 +351,14 @@ td.letter-by-letter-animation {
 	animation: kc-move 250ms steps(4) infinite;
 }
 
+/* 
+ * Ensures KC will not be still moving when he dies and that
+ * he is right side up.
+ */
+.kc.die {
+	animation-play-state: paused;
+	transform: rotate(0);
+}
 
 .kc.die:after {
 	background-image: url('../images/kc-dying.gif');
@@ -356,15 +370,22 @@ td.letter-by-letter-animation {
 	visibility: hidden;
 }
 
-.kc.e:after {
+.kc.e.reverse:after {
+	transform: translateZ(0);
+}
+
+.kc.e:after,
+.kc.w.reverse:after {
 	transform: scaleX(-1);
 }
 
-.kc.n:after {
+.kc.n:after,
+.kc.s.reverse:after {
 	transform: rotate(90deg);
 }
 
-.kc.s:after {
+.kc.s:after,
+.kc.n.reverse:after {
 	transform: scaleX(-1) rotate(-90deg);
 }
 
@@ -385,6 +406,7 @@ td.letter-by-letter-animation {
 /*
  * Styles for demo
  */
+
 .demo-mode #maze {
 	display: none;
 }
@@ -399,8 +421,9 @@ td.letter-by-letter-animation {
 
 .logo-container {
 	top: -20vmin;
-	height: 77vh;
+	height: 57vh;
 	position: relative;
+	overflow: hidden;
 }
 
 #slide1-3, #slide1-4 {
@@ -410,6 +433,7 @@ td.letter-by-letter-animation {
 
 #slide1-3 {
 	top: 50vmin;
+	transform: translateZ(0);
 }
 
 #slide1-4{
@@ -434,7 +458,7 @@ td.letter-by-letter-animation {
 	width: 100%;
 	transform: perspective(200px) scaleY(1.5) rotateX(-25deg) translateY(100vh);
 	opacity: 0;
-	transition: opacity 1500ms linear, transform 1500ms linear;
+	transition: opacity 500ms linear, transform 1500ms linear;
 	color: #D92A27;
 	margin-top: -0.1vmin;
 	overflow: hidden;
