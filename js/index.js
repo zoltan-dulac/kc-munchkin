@@ -1231,7 +1231,13 @@ var demo = new function () {
 		requestAnimationFrame(
 			function () {
 				if (index < message.length) { 
-					targetEl.innerHTML += `<span class="char-${index}">${message[index++]}</span>`; 
+					var letter = message[index++];
+
+					if (letter === ' ') {
+						letter = '&nbsp;';
+					}
+
+					targetEl.innerHTML += `<span class="char-${index}">${letter}</span>`; 
 					setRequestTimeout(
 						function () {
 							requestAnimationFrame(
