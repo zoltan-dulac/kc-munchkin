@@ -109,6 +109,23 @@ td {
 	vertical-align: middle;
 	white-space: nowrap;
 	position: relative;
+
+	/* animating cells is */
+	transition: 
+		ease-in-out 250ms transform,
+		ease-in-out 250ms opacity;
+	transform: translateZ(0) perspective(1000px) translateZ(0px);
+	opacity: 1;
+}
+
+td[data-initial-state] {
+	transform: translateZ(0) perspective(1000px) translateZ(-400px);
+	opacity: 0;
+}
+
+#maze[data-has-finished-rendering] td {
+	transform: none;
+	opacity: unset;
 }
 
 td:before {

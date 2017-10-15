@@ -172,9 +172,14 @@ function Graph(){
 }
 
 
-Node.prototype.add = function(tag, cnt, txt) {
-	for (var i = 0; i < cnt; i++)
-		this.appendChild(ce(tag, txt));
+Node.prototype.add = function(tag, cnt, txt, datasetItem) {
+	for (var i = 0; i < cnt; i++) {
+		var newNode = ce(tag, txt);
+		if (datasetItem) {
+			newNode.dataset[datasetItem] = 'true';
+		}
+		this.appendChild(newNode);
+	}
 };
 Node.prototype.ins = function(tag) {
 	this.insertBefore(ce(tag), this.firstChild);
@@ -470,7 +475,7 @@ var maze = new function () {
 		me.el.add('tr', h);
 		me.el.childNodes.map(function(x) {
 				x.add('th', 1);
-				x.add('td', w, '*');
+				x.add('td', w, '*', 'initialState');
 				x.add('th', 1);
 		});
 		me.el.ins('tr');
@@ -496,7 +501,27 @@ var maze = new function () {
 		removeDeadEnds();
 		removeThreeInARow();
 		generateGraph();
+		setRequestTimeout(makeVisible, 200);
 	};
+
+	function makeVisible() {
+		var cells = toArray(me.el.getElementsByTagName('td')),
+			delay = 50,
+			duration = parseFloat(document.defaultView.getComputedStyle(cells[0], null).transitionDuration.split(',')[0]) * 1000;
+
+		cells = game.shuffleArray(cells);
+		for (var i=0; i<cells.length; i++) {
+			var cell = cells[i];
+			cell.style.transitionDelay = `${delay * i}ms, ${delay * i}ms`;
+			delete cell.dataset.initialState;
+		}
+
+		setRequestTimeout(function () {
+			
+			game.startLevel();
+		}, delay * i + duration);
+
+	}
 	
 	function generateGraph() {
 		var i, j, k, edges, cell, cellClassList, dir;
@@ -507,8 +532,8 @@ var maze = new function () {
 			for ( j = 1; j <= me.height; j++ ) {
 				edges = {};
 				cell = me.getCell(i, j);
-				cell.setAttribute('data-x', i);
-				cell.setAttribute('data-y', j);
+				cell.dataset.x = i;
+				cell.dataset.y = j;
 				
 				cellClassList = cell.classList;
 				if (cellClassList.contains('n')) {
@@ -702,9 +727,6 @@ var KC = function(x, y) {
 	}
 	
 	function moveHelper(e, key) {
-		// ZOLTAN
-		console.log('wtf', e.key, key, e.keyIdentifier);
-
 		var cmdBeforeLast = lastCmd;
 		
 		/*
@@ -882,7 +904,6 @@ var KC = function(x, y) {
 	}
 	
 	me.die = function () {
-		console.log('dying');
 		document.body.removeEventListener('keydown', move);
 		document.body.removeEventListener('keyup', stop);
 		var currentTransform = document.defaultView.getComputedStyle(me.el, null).transform;
@@ -894,6 +915,8 @@ var KC = function(x, y) {
 		isSoundPlaying=false;
 		game.sounds['kc-die1'].play();
 		game.stopPlayers();
+		
+		delete maze.el.dataset.hasFinishedRendering;
 		
 		/*
 		 * We originally had
@@ -908,6 +931,7 @@ var KC = function(x, y) {
 	}
 	
 	me.reincarnate = function () {
+		game.clearStateTimeout();
 		me.el.classList.remove('die');
 		me.el.classList.add('dead');
 		
@@ -956,7 +980,6 @@ var KC = function(x, y) {
 		me.el.className = 'kc player';
 		me.el.__player = me;
 		maze.putInCell(me.el, x, y);
-		console.log('init!');
 		document.body.addEventListener('keydown', move);
 		document.body.addEventListener('keyup', stop);
 		//initGestures();
@@ -1201,12 +1224,14 @@ var demo = new function () {
 	
 	function slide1a() {
 		logoContainer = document.getElementById('slide-1');
-		logoContainer.classList.add('pixelate-animation');
-		logoEl = document.getElementById('slide1-2');
-		//logoEl.addEventListener('transitionend', slide1b);
-		requestAnimationFrame( function () {
-			logoEl.className += ' animate';
-		})
+		if (logoContainer) {
+			logoContainer.classList.add('pixelate-animation');
+			logoEl = document.getElementById('slide1-2');
+			//logoEl.addEventListener('transitionend', slide1b);
+			requestAnimationFrame( function () {
+				logoEl.className += ' animate';
+			});
+		}	
 	}
 	
 	
@@ -1363,7 +1388,11 @@ var game = new function () {
 		}
 	);
 	
-	setBonusDisplay = function(x, y, val) {
+	me.clearStateTimeout = function () {
+		clearRequestTimeout(stateTimeout);
+	}
+
+	function setBonusDisplay(x, y, val) {
 		var style = bonusDisplayEl.style;
 		style.left = x + 'px';
 		style.top = y + 'px';
@@ -1431,6 +1460,7 @@ var game = new function () {
 	}
 	
 	me.reset = function (keepScore) {
+		delete maze.el.dataset.hasFinishedRendering;
 		me.teardown(keepScore);
 		me.reincarnate();
 	};
@@ -1491,6 +1521,8 @@ var game = new function () {
 		}
 		
 		me.den.stop();
+
+		// stop sounds.
 	}
 	
 	me.getTargetedDirs = function (player, target, goAway) {
@@ -1511,9 +1543,7 @@ var game = new function () {
 		} else if (player.y < target.y){
 			favouredDirs.push(goAway ? 'n' : 's');
 		}
-		
-		//me.shuffleArray(possibleDirs);
-		
+
 		/*
 		 * we push the favoured directions twice on the return value
 		 */
@@ -1726,6 +1756,8 @@ var game = new function () {
 			a[i - 1] = a[j];
 			a[j] = x;
 		}
+
+		return a;
 	}
 	
 	me.start = function () {
@@ -1737,18 +1769,19 @@ var game = new function () {
 	me.reincarnate = function () {
 		maze.clear();
 		demo.stop();
-		showIntro(startLevel);
+		showIntro(initLevel);
 	}
 	
 	function showIntro(callback) {
 		overlayEl.className = '';
-		demo.showLetterByLetter(overlayEl, 'Ready Player 1', 0, 100, function () {
+		demo.showLetterByLetter(overlayEl, 'Ready Player 1', 0, 120, function () {
 			setRequestTimeout(function () {
 				overlayEl.innerHTML = '';
 				overlayEl.className = 'hidden';
-				callback();
 			}, 1000);
 		});
+
+		callback();
 	}
 	
 	me.showGameOver = function () {
@@ -1768,8 +1801,12 @@ var game = new function () {
 		});
 	}
 	
-	function startLevel() {
+	function initLevel() {
 		maze.make(9, 7, 5, 5);
+	}
+
+	me.startLevel = function () {
+		maze.el.dataset.hasFinishedRendering = 'true';
 		createDots();
 		createKC();
 		createDen();
