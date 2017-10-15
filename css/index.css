@@ -94,7 +94,8 @@ body {
 	position: absolute;
 	bottom: 0.8vmin;
 	left: 50%;
-	margin-left: calc(-92vmin * 9 / 14)
+	margin-left: calc(-92vmin * 9 / 14);
+	/* perspective: 3000px; */
 }
 
 th {
@@ -110,22 +111,27 @@ td {
 	white-space: nowrap;
 	position: relative;
 
-	/* animating cells is */
-	transition: 
+	/* transition: 
 		ease-in-out 250ms transform,
 		ease-in-out 250ms opacity;
-	transform: translateZ(0) perspective(1000px) translateZ(0px);
-	opacity: 1;
+
+	
+	transform: perspective(3000px) translateZ(0px);
+	opacity: 1; */
 }
 
 td[data-initial-state] {
-	transform: translateZ(0) perspective(1000px) translateZ(-400px);
-	opacity: 0;
+	/* transform: perspective(3000px) translateZ(-3000px);
+	opacity: 0; */
+}
+
+#maze[data-has-finished-rendering] {
+	perspective: initial;
 }
 
 #maze[data-has-finished-rendering] td {
 	transform: none;
-	opacity: unset;
+	opacity: initial;
 }
 
 td:before {
@@ -233,6 +239,7 @@ td.letter-by-letter-animation {
 	z-index: 2;
 	width: 100%;
 	height: 100%;
+	will-change: background-position-y, background-position;
 	background-size: calc(92vmin / 9 ) auto;
 	background-position-y: calc(92vmin / 9 * 4 / 16);
 	background-repeat: no-repeat;
