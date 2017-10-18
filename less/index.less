@@ -1,0 +1,706 @@
+@import "../fonts/PressStart2P/stylesheet.css";
+@import "../fonts/johnny-fever/stylesheet.css";
+/*
+ * 92vmin is the height of the maze.
+ */
+@maze-height: 92vmin;
+@maze-num-columns: 9;
+@maze-num-rows: 7;
+@maze-width: @maze-height * @maze-num-columns / @maze-num-rows;
+@maze-cell-height: @maze-height / @maze-num-rows;
+@maze-cell-width:  @maze-height / @maze-num-columns;
+@player-animation-length: 120vmin / 9;
+
+html, body {
+	height: 101vh;
+}
+
+body {
+	background: black;
+	color: white;
+	margin: 0;
+	overflow: hidden;
+	font-family: "PressStart2P", "Courier New", "Courier";
+	text-transform: uppercase;
+}
+
+.hidden {
+	display: none;
+}
+
+
+.sup {
+	top: -2.1vmin;
+	position: relative;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+.stats {
+	position: absolute;
+	right: 0;
+	top: 0;
+	padding: 1em;
+	width: @maze-width;
+	top: 0.8vmin;
+	left: 50%;
+	margin-left: calc(-92vmin * 9 / 14);
+	line-height: 1;
+	height: 4vmin;
+	font-size: 4vmin;
+	overflow: hidden;
+}
+
+#score-wrap {
+	position: absolute;
+	left: 0;
+	top: 0;
+}
+
+#high-score-wrap {
+	position: absolute;
+	right: 0;
+	top: 0;
+}
+
+.kc-life {
+	display: inline-block;
+	width: 4vmin;
+	height: 4vmin;
+	background-size: 4vmin 4vmin;
+	background-image: url('../images/kc-still.gif');
+	background-repeat: no-repeat;
+	image-rendering: -moz-crisp-edges;
+	image-rendering: pixelated;
+	margin-left: 0.5vmin;
+}
+
+#overlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	text-align: center;
+	width: 100vw;
+	height: 100vh;
+	display: block;
+	line-height: 100vh;
+	font-size: 3vmin;
+}
+
+#overlay.hidden {
+	display: none;
+}
+
+#maze {
+	width: @maze-width;
+	height: 92vmin;
+	transform: translateZ(0);
+	transform-origin: 0 0;
+	position: absolute;
+	bottom: 0.8vmin;
+	left: 50%;
+	margin-left: calc(-92vmin * 9 / 14);
+	perspective: 3000px;
+}
+
+th {
+	width: 0px;
+	display: none;
+}
+td {
+	border: 0.5vmin solid blue;
+	width: @maze-cell-width; /*  10.6666vmin; /* 92vmin / 9); */
+	height: @maze-cell-height;
+	text-align: center;
+	vertical-align: middle;
+	white-space: nowrap;
+	position: relative;
+
+	transition: 
+		ease-in-out 250ms transform,
+		ease-in-out 250ms opacity;
+
+	
+	transform: perspective(3000px) translateZ(0px);
+	opacity: 1;
+}
+
+td[data-initial-state] {
+	transform: perspective(3000px) translateZ(-3000px);
+	opacity: 0;
+}
+
+#maze[data-has-finished-rendering] {
+	perspective: initial;
+}
+
+#maze[data-has-finished-rendering] td {
+	transform: none;
+	opacity: initial;
+}
+
+td:before {
+	content: "";
+}
+
+td.s {
+	border-bottom: none;
+}
+td.n {
+	border-top: none;
+}
+td.w {
+	border-left: none;
+}
+td.e {
+	border-right: none;
+}
+td.v {
+	background: skyblue
+}
+
+td.n.e::before,
+td.n.w::before,
+td.s.e::after,
+td.s.w::after {
+	width: 1.2vmin;
+	height: 1.2vmin;
+	background: blue;
+	display: block;
+	position: absolute;
+}
+
+td.n.e::before,
+td.n.w::before {
+	top: -0.7vmin;
+}
+	
+td.s.e::after,
+td.s.w::after {
+	bottom: -0.7vmin;
+}
+	
+td.n.e::before,
+td.s.e::after {
+	right: -0.7vmin;
+}
+
+td.n.w::before,
+td.s.w::after {
+	left: -0.7vmin;
+}
+
+td.will-empty {
+	will-change: contents;
+}
+
+td.will-fill {
+	will-change: contents;
+}
+
+td.letter-by-letter-animation {
+	will-change: contents;
+}
+
+/*
+ * moving objects
+ */
+
+.player {
+	width: calc(~"@{maze-cell-width} - 1px");
+	height: calc(~"@{maze-cell-height} - 1px");
+	position: absolute;
+	top: 1vmin;
+	left: 1vmin;
+	display: inline-block;
+
+	image-rendering: -moz-crisp-edges;
+	image-rendering: pixelated;
+	
+	transform: translate3d(0, 0, 0);
+	will-change: transform;
+	
+	animation-timing-function: linear;
+	animation-duration: 500ms;
+	animation-fill-mode: forwards;
+	animation-delay: 0ms;
+}
+
+
+.player.paused {
+	animation-play-state: paused;
+}
+
+.player.reverse {
+	animation-direction: reverse;
+}
+
+.player:before {
+	content: "";
+	position: absolute;
+	left: 0;
+	top: 0;
+	z-index: 2;
+	width: 100%;
+	height: 100%;
+	will-change: background-position-y, background-position;
+	background-size: @maze-cell-width auto;
+	background-position-y: @maze-cell-width * 4 / 16;
+	background-repeat: no-repeat;
+}
+
+.player:after {
+	content: "";
+	position: absolute;
+	z-index: 0;
+	left: 0;
+	top: 0;
+	z-index: 1;
+	width: 100%;
+	height: 100%;
+	background-size: @maze-cell-width @maze-cell-width;
+	background-repeat: no-repeat;
+}
+
+/* Moving */
+.player.w {
+	animation-name: go-west;
+}
+
+
+.player.e {
+	animation-name: go-east;
+}
+
+.player.n {
+	animation-name: go-north;
+}
+
+.player.s {
+	animation-name: go-south;
+}
+
+.player.dot {
+	z-index: 30;
+	/* transition: transform linear 1000ms; */
+}
+
+.kc {
+	z-index: 20;
+}
+
+.stop {
+	display: none;
+}
+
+.muncher {
+	z-index: 30;
+}
+
+.dot:after {
+	background-image: url('../images/dot.gif');
+}
+
+.dot.pill:after {
+	background-image: url('../images/pill.gif');
+	animation: rotate-pallette 1000ms infinite;
+}
+
+.muncher:before {
+	
+}
+
+.muncher:after {
+	background-image: url('../images/muncher-left.gif');
+	background-size: auto @maze-cell-width;
+	animation: muncher-move 250ms steps(2) infinite;
+}
+
+.muncher-1:after {
+	filter: hue-rotate(160deg);
+}
+
+.muncher-2:after {
+	filter: hue-rotate(260deg);
+}
+
+.pill-eaten .muncher.edible:after {
+	filter: saturate(0%) brightness(2);
+}
+
+.pill-wearing-out .muncher.edible:after {
+	animation: muncher-flash 250ms infinite;
+}
+
+.muncher.eaten {
+	z-index: 10;
+	animation-duration: 100ms;
+}
+
+.muncher.eaten:after {
+	opacity: 0;
+}
+
+.muncher.e:after {
+	transform: scaleX(-1);
+}
+
+/*
+ * EYES
+ */
+
+.muncher.w:before {
+	background-image: url('../images/eyes-left.gif');
+}
+
+.muncher.e:before {
+	background-image: url('../images/eyes-left.gif');
+	transform: scaleX(-1);
+}
+
+.muncher.n:before {
+	background-image: url('../images/eyes-down.gif');
+	transform: scaleY(-1);
+	background-position-y: @maze-cell-width * 3 / 4;
+}
+
+.muncher.s:before {
+	background-image: url('../images/eyes-down.gif');
+}
+
+.kc:after {
+	background-image: url('../images/kc-still.gif');
+}
+
+
+.kc.move:after {
+	background-image: url('../images/kc-left.gif');
+	background-size: auto @maze-cell-width;
+	animation: kc-move 250ms steps(4) infinite;
+}
+
+/* 
+ * Ensures KC will not be still moving when he dies and that
+ * he is right side up.
+ */
+.kc.die {
+	animation-play-state: paused;
+	transform: rotate(0);
+}
+
+.kc.die:after {
+	background-image: url('../images/kc-dying.gif');
+	background-size: auto @maze-cell-width;
+	animation: kc-die 1000ms steps(8);
+}
+
+.kc.dead:after {
+	visibility: hidden;
+}
+
+.kc.e.reverse:after {
+	transform: translateZ(0);
+}
+
+.kc.e:after,
+.kc.w.reverse:after {
+	transform: scaleX(-1);
+}
+
+.kc.n:after,
+.kc.s.reverse:after {
+	transform: rotate(90deg);
+}
+
+.kc.s:after,
+.kc.n.reverse:after {
+	transform: scaleX(-1) rotate(-90deg);
+}
+
+#bonus-display {
+	position: absolute;
+	font-size: 2vmin;
+	transform: translate3d(0, 0, 0);
+	opacity: 0;
+}
+
+#bonus-display.show {
+	animation: show-bonus 500ms;
+	
+}
+
+
+
+/*
+ * Styles for demo
+ */
+
+.demo-mode #maze {
+	display: none;
+}
+
+.slide {
+	text-align: center;
+	padding-top: 20vmin;
+	line-height: 4;
+	font-size: 3vmin;
+	white-space: nowrap;
+}
+
+.logo-container {
+	top: -20vmin;
+	height: 57vh;
+	position: relative;
+	overflow: hidden;
+}
+
+#slide1-3, #slide1-4 {
+	position: absolute;
+	width: 100%;
+}
+
+#slide1-3 {
+	top: 50vmin;
+	transform: translateZ(0);
+}
+
+#slide1-4{
+	top: 35vmin;
+}
+
+.slide .kc {
+	position: relative;
+}
+
+.slide .kc.e {
+	animation-name: go-east-demo;
+	animation-timing-function: linear;
+	animation-duration: 4000ms;
+}
+
+.kc-munchkin-logo {
+	font-family: 'JohnnyFever-Regular';
+	line-height: 1;
+	font-size: 15vmin;
+	height: 15vmin;
+	width: 100%;
+	transform: perspective(200px) scaleY(1.5) rotateX(-25deg) translateY(100vh);
+	opacity: 0;
+	transition: opacity 500ms linear, transform 1500ms linear;
+	color: #D92A27;
+	margin-top: -0.1vmin;
+	overflow: hidden;
+}
+
+.kc-munchkin-logo.animate {
+	opacity: 1;
+	transform: perspective(200px) scaleY(1.5) rotateX(-25deg) translateY(0vh);
+}
+
+.white-gradient {
+	position: relative;
+}
+.white-gradient:after {
+	content: '';
+	display: block;
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 100%;
+	width: 100%;
+	background: linear-gradient(0deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 60%);
+}
+
+/*
+ * Progress Bars
+ */
+
+/* All HTML5 progress enabled browsers */
+#preloader {
+	/* Turns off styling - not usually needed, but good to know. */
+	appearance: none;
+	-moz-appearance: none;
+	-webkit-appearance: none;
+	/* gets rid of default border in Firefox and Opera. */
+	border: solid rgba(16, 16, 16, 0.8) 5px;
+	border-radius: 10px;
+	/* Dimensions */
+	width: 238px;
+	height: 45px;
+	position: absolute;
+	left: calc(50vw - 238px / 2);
+	top: calc(50vh - 45px / 2);
+}
+
+/*
+ * Background of the progress bar background
+ */
+
+/* Firefox and Polyfill */
+#preloader {
+	background: #cccccc !important; /* !important only needed in polyfill */
+}
+/* Chrome */
+#preloader::-webkit-progress-bar {
+	background: #cccccc;
+}
+/*
+ * Background of the progress bar value
+ */
+
+/* Firefox */
+#preloader::-moz-progress-bar {
+	border-radius: 5px;
+	background-image: -moz-linear-gradient(
+		center bottom,
+		rgb(43,194,83) 37%,
+		rgb(84,240,84) 69%
+	);
+}
+/* Chrome */
+#preloader::-webkit-progress-value {
+	border-radius: 5px;
+	background-image: -webkit-gradient(
+		linear,
+		left bottom,
+		left top,
+		color-stop(0, rgb(43,194,83)),
+		color-stop(1, rgb(84,240,84))
+	);
+	background-image: -webkit-linear-gradient(
+		center bottom,
+		rgb(43,194,83) 37%,
+		rgb(84,240,84) 69%
+	);
+}
+
+@keyframes kc-die {
+	100% { background-position-x: -1 * @maze-cell-width * 8 }
+}
+
+/*
+ * Why on earth does Chrome Win need -89.7vmin instead of -92vmin? Because if it
+ * doesn't, it will show an animation flaw
+ */
+@keyframes kc-move {
+	100% { background-position-x: -1 * @maze-cell-width * 4 }
+}
+
+@keyframes muncher-move {
+	100% { background-position-x: -1 * @maze-cell-width * 2 }
+}
+
+@keyframes muncher-flash {
+	0%, 50%, 100% {
+		 opacity: 1;
+	}
+	25%, 75% {
+		 opacity: 0;
+	}
+}
+
+@keyframes go-west {
+	100% { transform: translate3d(-1 * @player-animation-length, 0, 0); }
+}
+
+@keyframes go-east {
+	100% { transform: translate3d(@player-animation-length, 0, 0); }
+}
+
+@keyframes go-north {
+	100% { 	transform: translate3d(0, -1 * @player-animation-length, 0); }
+}
+
+@keyframes go-south {
+	100% { 	transform: translate3d(0, @player-animation-length, 0); }
+}
+
+@keyframes go-east-demo {
+	0% { transform: translate3d(-60vw, 0, 0); }
+	100% { transform: translate3d(0, 0, 0); }
+}
+
+
+@keyframes show-bonus {
+	0% {
+		opacity: 0,
+		transform3d(0, 0, 0);
+	}
+	
+	50% {
+		opacity: 1;
+		transform: translate3d(0, 0, 0) scale(2);
+	}
+	
+	100% {
+		opacity: 1;
+		transform: translate3d(0, 0, 0) scale(2);
+	}
+	
+}
+
+@keyframes rotate-pallette {
+	0% {
+		filter: hue-rotate(0deg);
+	}
+	
+	100% {
+		filter: hue-rotate(360deg);
+	}
+}
+
+@media screen and (max-aspect-ratio: 31 / 26) {
+	
+	.stats {
+		width: 100vw;
+		top: 0.8vw;
+		left: 0;
+		margin-left: 0;
+		height: 4vw;
+		font-size: 4vw;
+	}
+	
+	
+	.kc-life {
+		width: 4vw;
+		height: 4vw;
+		background-size: 4vw 4vw;
+	}
+	
+	#maze {
+		width: 100vw;
+		height: 77vw;
+		top: 5vw;
+		bottom: auto;
+		left: 0;
+		right: autp;
+		margin-left: 0;
+	}
+	
+	.player {
+		width: calc(92vw / 9 );
+		height: calc(92vw / 9 );
+		top: 1.5vw;
+		left: 0vw;
+	}
+	
+	@keyframes go-west {
+		100% { transform: translate3d(calc(-110vw / 9), 0, 0); }
+	}
+	
+	@keyframes go-east {
+		100% { transform: translate3d(calc(110vw / 9 ), 0, 0); }
+	}
+	
+	@keyframes go-north {
+		100% { 	transform: translate3d(0, calc(-110vw / 9 ), 0); }
+	}
+	
+	@keyframes go-south {
+		100% { 	transform: translate3d(0, calc(110vw / 9 ), 0); }
+	}
+	
+
+}
