@@ -210,7 +210,7 @@ td.letter-by-letter-animation {
 
 .player {
 	width: calc(~"@{maze-cell-width} - 1px");
-	height: calc(~"@{maze-cell-height} - 1px");
+	height: calc(~"@{maze-cell-width} - 1px");
 	position: absolute;
 	top: 1vmin;
 	left: 1vmin;
@@ -363,7 +363,7 @@ td.letter-by-letter-animation {
 .muncher.n:before {
 	background-image: url('../images/eyes-down.gif');
 	transform: scaleY(-1);
-	background-position-y: @maze-cell-width * 3 / 4;
+	background-position-y: @maze-cell-width * 1 / 2;
 }
 
 .muncher.s:before {

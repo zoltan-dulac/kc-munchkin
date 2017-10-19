@@ -171,6 +171,89 @@ function Graph(){
   };
 }
 
+/*
+ * Cookie routines
+ */
+var Cookie = new function() {
+	var me = this;
+	
+	function getCookieVal (offset) {
+		var endstr = document.cookie.indexOf (";", offset);
+		if (endstr == -1)
+			endstr = document.cookie.length;
+		return unescape(document.cookie.substring(offset, endstr));
+	}
+
+	me.get = function(name) {
+		var arg = name + "=";
+		var alen = arg.length;
+		var clen = document.cookie.length;
+		var i = 0;
+		while (i < clen) {
+		var j = i + alen;
+		if (document.cookie.substring(i, j) == arg)
+			return getCookieVal (j);
+		i = document.cookie.indexOf(" ", i) + 1;
+		if (i == 0) break; 
+		}
+		return null;
+	}
+
+	me.set = function (name, value) {
+		var argv = me.set.arguments;
+		var argc = me.set.arguments.length;
+		var expires = (argc > 2) ? argv[2] : null;
+		var path = (argc > 3) ? argv[3] : null;
+		var domain = (argc > 4) ? argv[4] : null;
+		var secure = (argc > 5) ? argv[5] : false;
+		document.cookie = name + "=" + escape (value) +
+		((expires == null) ? "" : ("; expires=" + expires.toGMTString())) +
+		((path == null) ? "" : ("; path=" + path)) +
+		((domain == null) ? "" : ("; domain=" + domain)) +
+		((secure == true) ? "; secure" : "");
+	}
+
+	me.delete = function(name) {
+		var exp = new Date();
+		exp.setTime (exp.getTime() - 100);  // This cookie is history
+		var cval = me.get(name);
+		document.cookie = name + "=" + cval + "; expires=" + exp.toGMTString();
+	}
+
+	// this func asks for a number of days and gives back a Date() that is
+	// that many days from now.
+	function DaystoDate(expDays) {
+		var exp = new Date(); 
+		exp.setTime(exp.getTime() + (expDays*24*60*60*1000));
+		window.alert(expDays*24*60*60*1000);
+		return exp;
+	}
+
+	function createDate(Month, date, Year, Hour, Minutes, Seconds) {
+		var expiration = new Date();
+		expiration.setMonth( Month );
+			expiration.setDate( date );
+			expiration.setYear( Year );
+			expiration.setHours( Hour );
+			expiration.setMinutes( Minutes );
+			expiration.setSeconds( Seconds );
+		return expiration;
+	}
+
+	me.canUse = function() {
+		var r,
+			tmpName = "canBrowserSetCookie";
+
+		me.set(tmpName, "true");
+		if (me.get(tmpName) === "true") {
+			me.delete(tmpName);
+			r=true;
+		} else {
+			r=false;
+		}
+		return r;
+	} 
+}
 
 Node.prototype.add = function(tag, cnt, txt, datasetItem) {
 	for (var i = 0; i < cnt; i++) {
@@ -1192,12 +1275,12 @@ var demo = new function () {
 	}
 	
 	function keyDownClickEvent(e) {
-		document.body.removeEventListener('keydown', keyDownClickEvent);
-		document.body.removeEventListener('click', keyDownClickEvent);
-		document.body.removeEventListener('touchstart', keyDownClickEvent);
 		if (e.key === ' ' || e.type === 'click') {
-			e.preventDefault();
+			document.body.removeEventListener('keydown', keyDownClickEvent);
+			document.body.removeEventListener('click', keyDownClickEvent);
+			document.body.removeEventListener('touchstart', keyDownClickEvent);
 			
+			e.preventDefault();
 			game.start(e);
 			
 		}
@@ -1432,6 +1515,17 @@ var game = new function () {
 	function setHighScore(s) {
 		highScore = s;
 		highScoreEl.innerHTML = s;
+		Cookie.set('kc-hi', s);
+	}
+
+	function getHighScore() {
+		var s = Cookie.get('kc-hi');
+
+		if (!s) {
+			s = 0;
+		}
+		highScoreEl.innerHTML = s;
+		highScore = parseInt(s);
 	}
 	
 	me.teardown = function (keepScore) {
@@ -1665,7 +1759,7 @@ var game = new function () {
 			// a collision.  This is because he is in a reversed state, he will
 			// appear to the browser in the cell he came from briefly, which
 			// is not perceptually correct. 
-			if (me.kc.isAtEndOfAnimation()) {
+			if (!me.kc || me.kc.isAtEndOfAnimation()) {
 				return;
 			}
 
@@ -1829,6 +1923,7 @@ var game = new function () {
 		bonusDisplayEl.addEventListener('animationend', bonusDisplayAnimationEnd);
 		initSounds();
 		setRequestTimeout(demo.start, 500);
+		getHighScore();
 	}
 	
 	me.log = console.log
