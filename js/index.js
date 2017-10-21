@@ -79,10 +79,6 @@ window.clearRequestTimeout = function(handle) {
  * this code works with the implementation in google's closure library (https://code.google.com/p/closure-library/).
  * Use goog.require('goog.structs.PriorityQueue'); and new goog.structs.PriorityQueue()
  * 
- * Code from https://github.com/mburst/dijkstras-algorithm
- * 
- * Idea for music: http://plnkr.co/edit/se2OIUBRxZsa3lUPtOJp?p=preview
- * https://www.sheetmusicdirect.com/se/ID_No/117773/Product.aspx
  */
 function PriorityQueue () {
   this._nodes = [];
@@ -340,6 +336,9 @@ var maze = new function () {
 	}
 	
 	me.getCellInDir = function(x, y, dir) {
+		var currentCell = me.getCell(x,y),
+			tunnel = currentCell.dataset.tunnel;
+
 		switch(dir) {
 			case "n":
 				return {
@@ -355,19 +354,35 @@ var maze = new function () {
 					y: y + 1
 				};
 				
-			case "w": 
-				return {
-					cell: me.getCell(x-1, y),
-					x: x - 1,
-					y: y
-				};
+			case "w":
+				if (tunnel === 'w') {
+					return {
+						cell: me.getCell(me.width, y),
+						x: me.width,
+						y: y
+					};
+				} else {
+					return {
+						cell: me.getCell(x-1, y),
+						x: x - 1,
+						y: y
+					};
+				}
 				
 			case "e":
-				return {
-					cell: me.getCell(x + 1, y),
-					x: x + 1,
-					y: y
-				};
+				if (tunnel === 'e') {
+					return {
+						cell: me.getCell(1, y),
+						x: 1,
+						y: y
+					};
+				} else {
+					return {
+						cell: me.getCell(x + 1, y),
+						x: x + 1,
+						y: y
+					};
+				}
 			default:
 				return {
 					cell: me.getCell(x, y),
@@ -536,14 +551,23 @@ var maze = new function () {
 	}
 
 	function makeTunnel() {
-		return;
 		var y = game.randInt(1, me.height);
 
 		me.leftTunnelCell = me.getCell(1, y),
 		me.rightTunnelCell = me.getCell(me.width, y);
+
+		me.leftTunnelCell.dataset.tunnel="w";
+		me.rightTunnelCell.dataset.tunnel="e";
 		
+		// make west tunnel
 		me.setWall(1, y, 'w', 'remove');
+		me.setWall(1, y, 'n', 'add');
+		me.setWall(1, y, 's', 'add');
+
+		// make east tunnel
 		me.setWall(me.width, y, 'e', 'remove');
+		me.setWall(me.width, y, 'n', 'add');
+		me.setWall(me.width, y, 's', 'add');
 	}
 	
 	me.setWall = function (x, y, dir, operation) {
@@ -594,9 +618,9 @@ var maze = new function () {
 		close_maze();
 		
 		makePathAroundDen();
+		makeTunnel();
 		removeDeadEnds();
 		removeThreeInARow();
-		makeTunnel();
 		generateGraph();
 		setRequestTimeout(makeVisible, 200);
 	};
@@ -870,10 +894,13 @@ var KC = function(x, y) {
 		
 		// Check to see if we gave a command.
 		if (lastCmd !== '') {
-			
-			// If we are moving, then we check if we reversed.  If so, reverse right
+			var currentCell = maze.getCell(me.x, me.y),
+				isInTunnel = !!currentCell.dataset.tunnel;
+
+			// If we are moving (and we are not in the tunnel), 
+			// then we check if we reversed.  If so, reverse right
 			// away.
-			if (isMoving) {
+			if (isMoving && !isInTunnel) {
 				if (cmdBeforeLast === game.oppositeDir(lastCmd)) {
 					requestAnimationFrame(function () {
 						go(true);
@@ -895,12 +922,16 @@ var KC = function(x, y) {
 		//me.el.className = 'kc move ' + me.dir;
 	}
 	
+	/*
+	 * KC animation end handler
+	 */ 
 	function animationendHandler(e) {
 		if (!canGoInNextCell) {
 			return;
 		}
-		var dir = isBackingUp ? '' : me.dir;
-		var elClass = me.el.classList;
+
+		var dir = isBackingUp ? '' : me.dir,
+			elClass = me.el.classList;
 
 		pause();
 		isBackingUp = false;
@@ -910,9 +941,11 @@ var KC = function(x, y) {
 
 		// If the animation ends, put this class in.  
 		elClass.add('end-of-animation');
+
 		elClass.remove('reverse');
 		if (me.dir !== '') {
 			cellInfo = maze.getCellInDir(me.x, me.y, dir);
+			
 			if (cellInfo) {
 				cellEl = cellInfo.cell;
 				me.x = cellInfo.x;
@@ -1149,6 +1182,7 @@ var Muncher = function (x, y, dir, speed, index) {
 	me.index = index;
 	me.isEnemy = true;
 	
+	/* Muncher animation end handler */
 	function animationendHandler(e) {
 		var cellInfo = maze.getCellInDir(me.x, me.y, me.dir);
 		cellEl = cellInfo.cell;

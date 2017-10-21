@@ -1,5 +1,15 @@
 @import "../fonts/PressStart2P/stylesheet.css";
 @import "../fonts/johnny-fever/stylesheet.css";
+
+.superDropShadow(@length, @opacity) {
+	@length2: @length / 2;
+	@length3: @length / 3;
+	filter: 
+		drop-shadow(@length 0 0 rgba(255, 255, 255, @opacity))
+		drop-shadow(@length2 0 0 rgba(0, 0, 255, @opacity))
+		drop-shadow(@length3 0 0 rgba(255, 0, 0, @opacity));
+
+}
 /*
  * 92vmin is the height of the maze.
  */
@@ -10,6 +20,8 @@
 @maze-cell-height: @maze-height / @maze-num-rows;
 @maze-cell-width:  @maze-height / @maze-num-columns;
 @player-animation-length: 120vmin / 9;
+@tunnel-length: @player-animation-length * 8;
+@super-drop-shadow-length: 30vw;
 
 html, body {
 	height: 101vh;
@@ -93,6 +105,10 @@ body {
 	display: none;
 }
 
+
+/*
+ * Maze styles
+ */
 #maze {
 	width: @maze-width;
 	height: 92vmin;
@@ -103,105 +119,108 @@ body {
 	left: 50%;
 	margin-left: calc(-92vmin * 9 / 14);
 	perspective: 3000px;
-}
 
-th {
-	width: 0px;
-	display: none;
-}
-td {
-	border: 0.5vmin solid blue;
-	width: @maze-cell-width; /*  10.6666vmin; /* 92vmin / 9); */
-	height: @maze-cell-height;
-	text-align: center;
-	vertical-align: middle;
-	white-space: nowrap;
-	position: relative;
-
-	transition: 
-		ease-in-out 250ms transform,
-		ease-in-out 250ms opacity;
-
+	&[data-has-finished-rendering] {
+		perspective: initial;
+	}
 	
-	transform: perspective(3000px) translateZ(0px);
-	opacity: 1;
-}
+	&[data-has-finished-rendering] td {
+		transform: none;
+		opacity: initial;
+	}
 
-td[data-initial-state] {
-	transform: perspective(3000px) translateZ(-3000px);
-	opacity: 0;
-}
+	th {
+		width: 0px;
+		display: none;
+	}
+	td {
+		border: 0.5vmin solid blue;
+		width: @maze-cell-width; /*  10.6666vmin; /* 92vmin / 9); */
+		height: @maze-cell-height;
+		text-align: center;
+		vertical-align: middle;
+		white-space: nowrap;
+		position: relative;
 
-#maze[data-has-finished-rendering] {
-	perspective: initial;
-}
+		transition: 
+			ease-in-out 250ms transform,
+			ease-in-out 250ms opacity;
 
-#maze[data-has-finished-rendering] td {
-	transform: none;
-	opacity: initial;
-}
-
-td:before {
-	content: "";
-}
-
-td.s {
-	border-bottom: none;
-}
-td.n {
-	border-top: none;
-}
-td.w {
-	border-left: none;
-}
-td.e {
-	border-right: none;
-}
-td.v {
-	background: skyblue
-}
-
-td.n.e::before,
-td.n.w::before,
-td.s.e::after,
-td.s.w::after {
-	width: 1.2vmin;
-	height: 1.2vmin;
-	background: blue;
-	display: block;
-	position: absolute;
-}
-
-td.n.e::before,
-td.n.w::before {
-	top: -0.7vmin;
-}
+		
+		transform: perspective(3000px) translateZ(0px);
+		opacity: 1;
 	
-td.s.e::after,
-td.s.w::after {
-	bottom: -0.7vmin;
-}
-	
-td.n.e::before,
-td.s.e::after {
-	right: -0.7vmin;
-}
+		&[data-initial-state] {
+			transform: perspective(3000px) translateZ(-3000px);
+			opacity: 0;
+		}
 
-td.n.w::before,
-td.s.w::after {
-	left: -0.7vmin;
-}
 
-td.will-empty {
-	will-change: contents;
-}
 
-td.will-fill {
-	will-change: contents;
-}
+		&:before {
+			content: "";
+		}
 
-td.letter-by-letter-animation {
-	will-change: contents;
+		&.s {
+			border-bottom: none;
+		}
+		&.n {
+			border-top: none;
+		}
+		&.w {
+			border-left: none;
+		}
+		&.e {
+			border-right: none;
+		}
+
+		&.v {
+			background: skyblue
+		}
+
+		&.n.e::before,
+		&.n.w::before,
+		&.s.e::after,
+		&.s.w::after {
+			width: 1.2vmin;
+			height: 1.2vmin;
+			background: blue;
+			display: block;
+			position: absolute;
+		}
+
+		&.n.e::before,
+		&.n.w::before {
+			top: -0.7vmin;
+		}
+			
+		&.s.e::after,
+		&.s.w::after {
+			bottom: -0.7vmin;
+		}
+			
+		&.n.e::before,
+		&.s.e::after {
+			right: -0.7vmin;
+		}
+
+		&.n.w::before,
+		&.s.w::after {
+			left: -0.7vmin;
+		}
+
+		&.will-empty {
+			will-change: contents;
+		}
+
+		&.will-fill {
+			will-change: contents;
+		}
+
+		&.letter-by-letter-animation {
+			will-change: contents;
+		}
+	}
 }
 
 /*
@@ -223,200 +242,223 @@ td.letter-by-letter-animation {
 	will-change: transform;
 	
 	animation-timing-function: linear;
-	animation-duration: 500ms;
 	animation-fill-mode: forwards;
-	animation-delay: 0ms;
-}
+
+	// These are overriden via JS for the munchers and dots as the game
+	// needs them to be.
+	animation-duration: 500ms;
 
 
-.player.paused {
-	animation-play-state: paused;
-}
 
-.player.reverse {
-	animation-direction: reverse;
-}
+	&.paused {
+		animation-play-state: paused;
+	}
 
-.player:before {
-	content: "";
-	position: absolute;
-	left: 0;
-	top: 0;
-	z-index: 2;
-	width: 100%;
-	height: 100%;
-	will-change: background-position-y, background-position;
-	background-size: @maze-cell-width auto;
-	background-position-y: @maze-cell-width * 4 / 16;
-	background-repeat: no-repeat;
-}
+	&.reverse {
+		animation-direction: reverse;
+	}
 
-.player:after {
-	content: "";
-	position: absolute;
-	z-index: 0;
-	left: 0;
-	top: 0;
-	z-index: 1;
-	width: 100%;
-	height: 100%;
-	background-size: @maze-cell-width @maze-cell-width;
-	background-repeat: no-repeat;
-}
+	&:before {
+		content: "";
+		position: absolute;
+		left: 0;
+		top: 0;
+		z-index: 2;
+		width: 100%;
+		height: 100%;
+		will-change: background-position-y, background-position;
+		background-size: @maze-cell-width auto;
+		background-position-y: @maze-cell-width * 4 / 16;
+		background-repeat: no-repeat;
+	}
 
-/* Moving */
-.player.w {
-	animation-name: go-west;
-}
+	&:after {
+		content: "";
+		position: absolute;
+		z-index: 0;
+		left: 0;
+		top: 0;
+		z-index: 1;
+		width: 100%;
+		height: 100%;
+		background-size: @maze-cell-width @maze-cell-width;
+		background-repeat: no-repeat;
+	}
 
+	/* Moving */
+	&.w {
+		animation-name: go-west;
 
-.player.e {
-	animation-name: go-east;
-}
-
-.player.n {
-	animation-name: go-north;
-}
-
-.player.s {
-	animation-name: go-south;
-}
-
-.player.dot {
-	z-index: 30;
-	/* transition: transform linear 1000ms; */
-}
-
-.kc {
-	z-index: 20;
-}
-
-.stop {
-	display: none;
-}
-
-.muncher {
-	z-index: 30;
-}
-
-.dot:after {
-	background-image: url('../images/dot.svgz');
-}
-
-.dot.pill:after {
-	background-image: url('../images/pill.svgz');
-	animation: rotate-pallette 1000ms infinite;
-}
-
-.muncher:before {
-	
-}
-
-.muncher:after {
-	background-image: url('../images/muncher-left.svgz');
-	background-size: auto @maze-cell-width;
-	animation: muncher-move 250ms steps(2) infinite;
-}
-
-.muncher-1:after {
-	filter: hue-rotate(160deg);
-}
-
-.muncher-2:after {
-	filter: hue-rotate(260deg);
-}
-
-.pill-eaten .muncher.edible:after {
-	filter: saturate(0%) brightness(2);
-}
-
-.pill-wearing-out .muncher.edible:after {
-	animation: muncher-flash 250ms infinite;
-}
-
-.muncher.eaten {
-	z-index: 10;
-	animation-duration: 100ms;
-}
-
-.muncher.eaten:after {
-	opacity: 0;
-}
-
-.muncher.e:after {
-	transform: scaleX(-1);
-}
-
-/*
- * EYES
- */
-
-.muncher.w:before {
-	background-image: url('../images/eyes-left.svgz');
-}
-
-.muncher.e:before {
-	background-image: url('../images/eyes-left.svgz');
-	transform: scaleX(-1);
-}
-
-.muncher.n:before {
-	background-image: url('../images/eyes-down.svgz');
-	transform: scaleY(-1);
-	background-position-y: @maze-cell-width * 1 / 2;
-}
-
-.muncher.s:before {
-	background-image: url('../images/eyes-down.svgz');
-}
-
-.kc:after {
-	background-image: url('../images/kc-still.svgz');
-}
+		td[data-tunnel="w"] & {
+			animation-name: go-west-in-tunnel;
+			animation-duration: 2s;
+		}
+	}
 
 
-.kc.move:after {
-	background-image: url('../images/kc-left.svgz');
-	background-size: auto @maze-cell-width;
-	animation: kc-move 250ms steps(4) infinite;
-}
+	&.e {
+		animation-name: go-east;
 
-/* 
- * Ensures KC will not be still moving when he dies and that
- * he is right side up.
- */
-.kc.die {
-	animation-play-state: paused;
-	transform: rotate(0);
-}
+		td[data-tunnel="e"] & {
+			animation-name: go-east-in-tunnel;
+			animation-duration: 2s;
+		}
+	}
 
-.kc.die:after {
-	background-image: url('../images/kc-dying.svgz');
-	background-size: auto @maze-cell-width;
-	animation: kc-die 1000ms steps(8);
-}
+	&.n {
+		animation-name: go-north;
+	}
 
-.kc.dead:after {
-	visibility: hidden;
-}
+	&.s {
+		animation-name: go-south;
+	}
 
-.kc.e.reverse:after {
-	transform: translateZ(0);
-}
+	&.dot {
+		z-index: 30;
+		
 
-.kc.e:after,
-.kc.w.reverse:after {
-	transform: scaleX(-1);
-}
+		&:after {
+			background-image: url('../images/dot.svgz');
+		}
 
-.kc.n:after,
-.kc.s.reverse:after {
-	transform: rotate(90deg);
-}
+		&.pill:after {
+			background-image: url('../images/pill.svgz');
+			animation: rotate-pallette 1000ms infinite;
+		}
 
-.kc.s:after,
-.kc.n.reverse:after {
-	transform: scaleX(-1) rotate(-90deg);
+	}
+
+
+
+	&.stop {
+		display: none;
+	}
+
+	&.kc {
+		z-index: 20;
+
+
+		&:after {
+			background-image: url('../images/kc-still.svgz');
+		}
+
+
+		&.move:after {
+			background-image: url('../images/kc-left.svgz');
+			background-size: auto @maze-cell-width;
+			animation: kc-move 250ms steps(4) infinite;
+		}
+
+		/* 
+		* Ensures KC will not be still moving when he dies and that
+		* he is right side up.
+		*/
+		&.die {
+			animation-play-state: paused;
+			transform: rotate(0);
+
+
+			&:after {
+				background-image: url('../images/kc-dying.svgz');
+				background-size: auto @maze-cell-width;
+				animation: kc-die 1000ms steps(8);
+			}
+		}
+
+
+		&.dead:after {
+			visibility: hidden;
+		}
+
+		&.e.reverse:after {
+			transform: translateZ(0);
+		}
+
+		&.e:after,
+		&.w.reverse:after {
+			transform: scaleX(-1);
+		}
+
+		&.n:after,
+		&.s.reverse:after {
+			transform: rotate(90deg);
+		}
+
+		&.s:after,
+		&.n.reverse:after {
+			transform: scaleX(-1) rotate(-90deg);
+		}
+	}
+
+	&.muncher {
+		z-index: 30;
+
+		/* Muncher body */
+		&:after {
+			background-image: url('../images/muncher-left.svgz');
+			background-size: auto @maze-cell-width;
+			animation: muncher-move 250ms steps(2) infinite;
+
+			&.e {
+				transform: scaleX(-1);
+			}
+		}
+
+		
+		/* Alternate colours for each muncher using filters */
+		&-1:after {
+			filter: hue-rotate(160deg);
+		}
+
+		&-2:after {
+			filter: hue-rotate(260deg);
+		}
+
+		
+		/*
+		* EYES
+		*/
+		&.w:before {
+			background-image: url('../images/eyes-left.svgz');
+		}
+
+		&.e:before {
+			background-image: url('../images/eyes-left.svgz');
+			transform: scaleX(-1);
+		}
+
+		&.n:before {
+			background-image: url('../images/eyes-down.svgz');
+			transform: scaleY(-1);
+			background-position-y: @maze-cell-width * 1 / 2;
+		}
+
+		&.s:before {
+			background-image: url('../images/eyes-down.svgz');
+		}
+
+		&.edible {
+
+			.pill-eaten &:after {
+				filter: saturate(0%) brightness(2);
+			}
+
+			.pill-wearing-out &:after {
+				animation: muncher-flash 250ms infinite;
+			}
+		}
+
+		/* Eaten styles */
+		&.eaten {
+			z-index: 10;
+			animation-duration: 100ms;
+			
+			&:after {
+				opacity: 0;
+			}
+		}
+	}
+
 }
 
 #bonus-display {
@@ -532,48 +574,40 @@ td.letter-by-letter-animation {
 	position: absolute;
 	left: calc(50vw - 238px / 2);
 	top: calc(50vh - 45px / 2);
-}
 
-/*
- * Background of the progress bar background
- */
+	/* Chrome */
+	&::-webkit-progress-bar {
+		background: #cccccc;
+	}
+	/*
+	* Background of the progress bar value
+	*/
 
-/* Firefox and Polyfill */
-#preloader {
-	background: #cccccc !important; /* !important only needed in polyfill */
-}
-/* Chrome */
-#preloader::-webkit-progress-bar {
-	background: #cccccc;
-}
-/*
- * Background of the progress bar value
- */
-
-/* Firefox */
-#preloader::-moz-progress-bar {
-	border-radius: 5px;
-	background-image: -moz-linear-gradient(
-		center bottom,
-		rgb(43,194,83) 37%,
-		rgb(84,240,84) 69%
-	);
-}
-/* Chrome */
-#preloader::-webkit-progress-value {
-	border-radius: 5px;
-	background-image: -webkit-gradient(
-		linear,
-		left bottom,
-		left top,
-		color-stop(0, rgb(43,194,83)),
-		color-stop(1, rgb(84,240,84))
-	);
-	background-image: -webkit-linear-gradient(
-		center bottom,
-		rgb(43,194,83) 37%,
-		rgb(84,240,84) 69%
-	);
+	/* Firefox */
+	&::-moz-progress-bar {
+		border-radius: 5px;
+		background-image: -moz-linear-gradient(
+			center bottom,
+			rgb(43,194,83) 37%,
+			rgb(84,240,84) 69%
+		);
+	}
+	/* Chrome */
+	&::-webkit-progress-value {
+		border-radius: 5px;
+		background-image: -webkit-gradient(
+			linear,
+			left bottom,
+			left top,
+			color-stop(0, rgb(43,194,83)),
+			color-stop(1, rgb(84,240,84))
+		);
+		background-image: -webkit-linear-gradient(
+			center bottom,
+			rgb(43,194,83) 37%,
+			rgb(84,240,84) 69%
+		);
+	}
 }
 
 @keyframes kc-die {
@@ -605,8 +639,61 @@ td.letter-by-letter-animation {
 	100% { transform: translate3d(-1 * @player-animation-length, 0, 0); }
 }
 
+@keyframes go-west-in-tunnel {
+	0% {
+		opacity: 1;
+		transform: translate3d(0, 0, 0);
+		.superDropShadow(0, 0.5);
+	}
+
+	49% { 
+		opacity: 0;
+		transform: translate3d(-1 * @tunnel-length, 0, 0);
+		.superDropShadow(@super-drop-shadow-length, 1);
+	}
+
+	51% {
+		opacity: 0;
+		transform: translate3d(8 * @player-animation-length + @tunnel-length, 0, 0);
+		.superDropShadow(@super-drop-shadow-length, 1);
+	}
+
+	100% {
+		opacity: 1;
+		transform: translate3d(8 * @player-animation-length, 0, 0);
+		.superDropShadow(0, 0.5);
+	}
+}
+
 @keyframes go-east {
 	100% { transform: translate3d(@player-animation-length, 0, 0); }
+}
+
+
+@keyframes go-east-in-tunnel {
+	0% {
+		opacity: 1; 
+		transform: translate3d(0, 0, 0);
+		.superDropShadow(0, 0.5);
+	}
+
+	49% { 
+		opacity: 0;
+		transform: translate3d(@tunnel-length, 0, 0);
+		.superDropShadow(-@super-drop-shadow-length, 1);
+	}
+
+	51% {
+		opacity: 0;
+		transform: translate3d(-8 * @player-animation-length - @tunnel-length, 0, 0);
+		.superDropShadow(-@super-drop-shadow-length, 1);
+	}
+
+	100% {
+		opacity: 1;
+		transform: translate3d(-8 * @player-animation-length, 0, 0);
+		.superDropShadow(0, 0.5);
+	}
 }
 
 @keyframes go-north {

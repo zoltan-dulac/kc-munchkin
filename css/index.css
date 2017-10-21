@@ -74,6 +74,9 @@ body {
 #overlay.hidden {
   display: none;
 }
+/*
+ * Maze styles
+ */
 #maze {
   width: 118.28571429vmin;
   height: 92vmin;
@@ -85,11 +88,18 @@ body {
   margin-left: calc(-59.14285714vmin);
   perspective: 3000px;
 }
-th {
+#maze[data-has-finished-rendering] {
+  perspective: initial;
+}
+#maze[data-has-finished-rendering] td {
+  transform: none;
+  opacity: initial;
+}
+#maze th {
   width: 0px;
   display: none;
 }
-td {
+#maze td {
   border: 0.5vmin solid blue;
   width: 10.22222222vmin;
   /*  10.6666vmin; /* 92vmin / 9); */
@@ -102,68 +112,61 @@ td {
   transform: perspective(3000px) translateZ(0px);
   opacity: 1;
 }
-td[data-initial-state] {
+#maze td[data-initial-state] {
   transform: perspective(3000px) translateZ(-3000px);
   opacity: 0;
 }
-#maze[data-has-finished-rendering] {
-  perspective: initial;
-}
-#maze[data-has-finished-rendering] td {
-  transform: none;
-  opacity: initial;
-}
-td:before {
+#maze td:before {
   content: "";
 }
-td.s {
+#maze td.s {
   border-bottom: none;
 }
-td.n {
+#maze td.n {
   border-top: none;
 }
-td.w {
+#maze td.w {
   border-left: none;
 }
-td.e {
+#maze td.e {
   border-right: none;
 }
-td.v {
+#maze td.v {
   background: skyblue;
 }
-td.n.e::before,
-td.n.w::before,
-td.s.e::after,
-td.s.w::after {
+#maze td.n.e::before,
+#maze td.n.w::before,
+#maze td.s.e::after,
+#maze td.s.w::after {
   width: 1.2vmin;
   height: 1.2vmin;
   background: blue;
   display: block;
   position: absolute;
 }
-td.n.e::before,
-td.n.w::before {
+#maze td.n.e::before,
+#maze td.n.w::before {
   top: -0.7vmin;
 }
-td.s.e::after,
-td.s.w::after {
+#maze td.s.e::after,
+#maze td.s.w::after {
   bottom: -0.7vmin;
 }
-td.n.e::before,
-td.s.e::after {
+#maze td.n.e::before,
+#maze td.s.e::after {
   right: -0.7vmin;
 }
-td.n.w::before,
-td.s.w::after {
+#maze td.n.w::before,
+#maze td.s.w::after {
   left: -0.7vmin;
 }
-td.will-empty {
+#maze td.will-empty {
   will-change: contents;
 }
-td.will-fill {
+#maze td.will-fill {
   will-change: contents;
 }
-td.letter-by-letter-animation {
+#maze td.letter-by-letter-animation {
   will-change: contents;
 }
 /*
@@ -181,9 +184,9 @@ td.letter-by-letter-animation {
   transform: translate3d(0, 0, 0);
   will-change: transform;
   animation-timing-function: linear;
-  animation-duration: 500ms;
   animation-fill-mode: forwards;
-  animation-delay: 0ms;
+  animation-duration: 500ms;
+  /* Moving */
 }
 .player.paused {
   animation-play-state: paused;
@@ -216,12 +219,19 @@ td.letter-by-letter-animation {
   background-size: 10.22222222vmin 10.22222222vmin;
   background-repeat: no-repeat;
 }
-/* Moving */
 .player.w {
   animation-name: go-west;
 }
+td[data-tunnel="w"] .player.w {
+  animation-name: go-west-in-tunnel;
+  animation-duration: 2s;
+}
 .player.e {
   animation-name: go-east;
+}
+td[data-tunnel="e"] .player.e {
+  animation-name: go-east-in-tunnel;
+  animation-duration: 2s;
 }
 .player.n {
   animation-name: go-north;
@@ -231,107 +241,109 @@ td.letter-by-letter-animation {
 }
 .player.dot {
   z-index: 30;
-  /* transition: transform linear 1000ms; */
 }
-.kc {
-  z-index: 20;
-}
-.stop {
-  display: none;
-}
-.muncher {
-  z-index: 30;
-}
-.dot:after {
+.player.dot:after {
   background-image: url('../images/dot.svgz');
 }
-.dot.pill:after {
+.player.dot.pill:after {
   background-image: url('../images/pill.svgz');
   animation: rotate-pallette 1000ms infinite;
 }
-.muncher:after {
-  background-image: url('../images/muncher-left.svgz');
-  background-size: auto 10.22222222vmin;
-  animation: muncher-move 250ms steps(2) infinite;
+.player.stop {
+  display: none;
 }
-.muncher-1:after {
-  filter: hue-rotate(160deg);
+.player.kc {
+  z-index: 20;
+  /* 
+		* Ensures KC will not be still moving when he dies and that
+		* he is right side up.
+		*/
 }
-.muncher-2:after {
-  filter: hue-rotate(260deg);
-}
-.pill-eaten .muncher.edible:after {
-  filter: saturate(0%) brightness(2);
-}
-.pill-wearing-out .muncher.edible:after {
-  animation: muncher-flash 250ms infinite;
-}
-.muncher.eaten {
-  z-index: 10;
-  animation-duration: 100ms;
-}
-.muncher.eaten:after {
-  opacity: 0;
-}
-.muncher.e:after {
-  transform: scaleX(-1);
-}
-/*
- * EYES
- */
-.muncher.w:before {
-  background-image: url('../images/eyes-left.svgz');
-}
-.muncher.e:before {
-  background-image: url('../images/eyes-left.svgz');
-  transform: scaleX(-1);
-}
-.muncher.n:before {
-  background-image: url('../images/eyes-down.svgz');
-  transform: scaleY(-1);
-  background-position-y: 5.11111111vmin;
-}
-.muncher.s:before {
-  background-image: url('../images/eyes-down.svgz');
-}
-.kc:after {
+.player.kc:after {
   background-image: url('../images/kc-still.svgz');
 }
-.kc.move:after {
+.player.kc.move:after {
   background-image: url('../images/kc-left.svgz');
   background-size: auto 10.22222222vmin;
   animation: kc-move 250ms steps(4) infinite;
 }
-/* 
- * Ensures KC will not be still moving when he dies and that
- * he is right side up.
- */
-.kc.die {
+.player.kc.die {
   animation-play-state: paused;
   transform: rotate(0);
 }
-.kc.die:after {
+.player.kc.die:after {
   background-image: url('../images/kc-dying.svgz');
   background-size: auto 10.22222222vmin;
   animation: kc-die 1000ms steps(8);
 }
-.kc.dead:after {
+.player.kc.dead:after {
   visibility: hidden;
 }
-.kc.e.reverse:after {
+.player.kc.e.reverse:after {
   transform: translateZ(0);
 }
-.kc.e:after,
-.kc.w.reverse:after {
+.player.kc.e:after,
+.player.kc.w.reverse:after {
   transform: scaleX(-1);
 }
-.kc.n:after,
-.kc.s.reverse:after {
+.player.kc.n:after,
+.player.kc.s.reverse:after {
   transform: rotate(90deg);
 }
-.kc.s:after,
-.kc.n.reverse:after {
+.player.kc.s:after,
+.player.kc.n.reverse:after {
   transform: scaleX(-1) rotate(-90deg);
+}
+.player.muncher {
+  z-index: 30;
+  /* Muncher body */
+  /* Alternate colours for each muncher using filters */
+  /*
+		* EYES
+		*/
+  /* Eaten styles */
+}
+.player.muncher:after {
+  background-image: url('../images/muncher-left.svgz');
+  background-size: auto 10.22222222vmin;
+  animation: muncher-move 250ms steps(2) infinite;
+}
+.player.muncher:after.e {
+  transform: scaleX(-1);
+}
+.player.muncher-1:after {
+  filter: hue-rotate(160deg);
+}
+.player.muncher-2:after {
+  filter: hue-rotate(260deg);
+}
+.player.muncher.w:before {
+  background-image: url('../images/eyes-left.svgz');
+}
+.player.muncher.e:before {
+  background-image: url('../images/eyes-left.svgz');
+  transform: scaleX(-1);
+}
+.player.muncher.n:before {
+  background-image: url('../images/eyes-down.svgz');
+  transform: scaleY(-1);
+  background-position-y: 5.11111111vmin;
+}
+.player.muncher.s:before {
+  background-image: url('../images/eyes-down.svgz');
+}
+.pill-eaten .player.muncher.edible:after {
+  filter: saturate(0%) brightness(2);
+}
+.pill-wearing-out .player.muncher.edible:after {
+  animation: muncher-flash 250ms infinite;
+}
+.player.muncher.eaten {
+  z-index: 10;
+  animation-duration: 100ms;
+}
+.player.muncher.eaten:after {
+  opacity: 0;
 }
 #bonus-display {
   position: absolute;
@@ -429,28 +441,20 @@ td.letter-by-letter-animation {
   position: absolute;
   left: calc(-69vw);
   top: calc(27.5vh);
+  /* Chrome */
+  /*
+	* Background of the progress bar value
+	*/
+  /* Firefox */
+  /* Chrome */
 }
-/*
- * Background of the progress bar background
- */
-/* Firefox and Polyfill */
-#preloader {
-  background: #cccccc !important;
-  /* !important only needed in polyfill */
-}
-/* Chrome */
 #preloader::-webkit-progress-bar {
   background: #cccccc;
 }
-/*
- * Background of the progress bar value
- */
-/* Firefox */
 #preloader::-moz-progress-bar {
   border-radius: 5px;
   background-image: -moz-linear-gradient(center bottom, #2bc253 37%, #54f054 69%);
 }
-/* Chrome */
 #preloader::-webkit-progress-value {
   border-radius: 5px;
   background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0, #2bc253), color-stop(1, #54f054));
@@ -491,9 +495,53 @@ td.letter-by-letter-animation {
     transform: translate3d(-13.33333333vmin, 0, 0);
   }
 }
+@keyframes go-west-in-tunnel {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+    filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0.5)) drop-shadow(0 0 0 rgba(0, 0, 255, 0.5)) drop-shadow(0 0 0 rgba(255, 0, 0, 0.5));
+  }
+  49% {
+    opacity: 0;
+    transform: translate3d(-106.66666667vmin, 0, 0);
+    filter: drop-shadow(30vw 0 0 #ffffff) drop-shadow(15vw 0 0 #0000ff) drop-shadow(10vw 0 0 #ff0000);
+  }
+  51% {
+    opacity: 0;
+    transform: translate3d(213.33333333vmin, 0, 0);
+    filter: drop-shadow(30vw 0 0 #ffffff) drop-shadow(15vw 0 0 #0000ff) drop-shadow(10vw 0 0 #ff0000);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(106.66666667vmin, 0, 0);
+    filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0.5)) drop-shadow(0 0 0 rgba(0, 0, 255, 0.5)) drop-shadow(0 0 0 rgba(255, 0, 0, 0.5));
+  }
+}
 @keyframes go-east {
   100% {
     transform: translate3d(13.33333333vmin, 0, 0);
+  }
+}
+@keyframes go-east-in-tunnel {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+    filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0.5)) drop-shadow(0 0 0 rgba(0, 0, 255, 0.5)) drop-shadow(0 0 0 rgba(255, 0, 0, 0.5));
+  }
+  49% {
+    opacity: 0;
+    transform: translate3d(106.66666667vmin, 0, 0);
+    filter: drop-shadow(-30vw 0 0 #ffffff) drop-shadow(-15vw 0 0 #0000ff) drop-shadow(-10vw 0 0 #ff0000);
+  }
+  51% {
+    opacity: 0;
+    transform: translate3d(-213.33333333vmin, 0, 0);
+    filter: drop-shadow(-30vw 0 0 #ffffff) drop-shadow(-15vw 0 0 #0000ff) drop-shadow(-10vw 0 0 #ff0000);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(-106.66666667vmin, 0, 0);
+    filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0.5)) drop-shadow(0 0 0 rgba(0, 0, 255, 0.5)) drop-shadow(0 0 0 rgba(255, 0, 0, 0.5));
   }
 }
 @keyframes go-north {
