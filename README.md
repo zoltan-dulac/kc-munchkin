@@ -19,14 +19,35 @@ The original game for the Odyssey² was created by
 [Ed Averett](http://www.the-nextlevel.com/odyssey2/articles/edaverett/), who 
 created the majority of the games for the system.
 
-The graphics for this game were lifted from 
-[this AtariAge forum page](http://atariage.com/forums/topic/220324-kc-munchkin/page-3),
-which I believe were preliminary comps for a homebrew Atari 7800 version of the
-game.  The maze algorithm is a modified version of 
-[this maze algorithm from Rosetta Code](https://rosettacode.org/wiki/Maze_generation#JavaScript).
+No overall fancy framework (i.e. React, Angular, etc) was used for this 
+project -- this is coded in plain old Javascript.  I did, however, make use of a
+few cool things available on the Internet: 
 
-No frameworks were used except for the [Howler](https://howlerjs.com/) for
-the sound effects.
+- [sfMaker](https://www.leshylabs.com/apps/sfMaker/) was used to generate
+the mp3 sound effects for this game 
+- [Howler](https://howlerjs.com/) is used to play the mp3 files.
+- The sprites used in the game were created by Illya Wilson, which were originally
+designed for an Atari 7800 port of the game.  I discovered his work on
+[this thread](http://atariage.com/forums/topic/220324-kc-munchkin/page-3)
+of the [Atari Age website](http://atariage.com/forums/topic/220324-kc-munchkin/page-3).
+Many thanks to both Illya and Atari Age -- without the both of you this game is
+a lot better than it would have been.
+- the sprites were converted from png to SVG using
+[pixel2svg](http://florian-berger.de/en/software/pixel2svg/).  This was necessary
+since scaling PNGs as a background image without anti-aliasing is currently
+impossible with IE/Edge.
+- The algorithm that the munchers (a.k.a "ghosts") use makes use of 
+[this implementation of Dijkstra's algorithm](https://github.com/mburst/dijkstras-algorithm).
+- [These more efficient implementations of setTimeout/setInterval](https://gist.github.com/joelambert/1002116)
+were used throughout the code.
+- The random mazes uses [this code](https://rosettacode.org/wiki/Maze_generation#JavaScript)
+as a basis.  It was modified to reduce dead ends and make it more suitable 
+for K.C. Munchkin.
+
+Music may be added in a future release.  The following links are being used as inspiration.
+ * Idea for music: http://plnkr.co/edit/se2OIUBRxZsa3lUPtOJp?p=preview
+ * https://www.sheetmusicdirect.com/se/ID_No/117773/Product.aspx
+
 
 This game is still in heavy development.  Right now, there is one level that
 plays over and over again.  Future revisions will have different levels, including:

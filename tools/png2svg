@@ -1,0 +1,20 @@
+#!/bin/bash
+
+if [ "$#" = "0" ]
+then
+	echo "Usage: `basename $0` <png1> <png2> ... <pngn>" 1>&2
+	exit 1
+fi
+
+
+for i in $*
+do
+	pixel2svg.py $i --overlap --squaresize=10
+	FILE_WITHOUT_EXT="${i%.*}"
+
+
+	sed -e 's/<svg /<svg shape-rendering="optimizeSpeed" /' $FILE_WITHOUT_EXT.svg > $$.svg 
+	mv $$.svg $FILE_WITHOUT_EXT.svg
+	gzip -9k $FILE_WITHOUT_EXT.svg
+	mv $FILE_WITHOUT_EXT.svg.gz $FILE_WITHOUT_EXT.svgz
+done
