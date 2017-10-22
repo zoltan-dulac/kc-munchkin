@@ -359,7 +359,8 @@ var maze = new function () {
 					return {
 						cell: me.getCell(me.width, y),
 						x: me.width,
-						y: y
+						y: y,
+						isInTunnel: true
 					};
 				} else {
 					return {
@@ -374,7 +375,8 @@ var maze = new function () {
 					return {
 						cell: me.getCell(1, y),
 						x: 1,
-						y: y
+						y: y,
+						isInTunnel: true
 					};
 				} else {
 					return {
@@ -800,6 +802,7 @@ var KC = function(x, y) {
 	me.y = y;
 	me.dir = null;
 	me.el = null;
+	me.isInTunnel = false;
 	
 	angleKeyMapping = [];
 	angleKeyMapping[360] = 'ArrowRight';
@@ -921,6 +924,17 @@ var KC = function(x, y) {
 		
 		//me.el.className = 'kc move ' + me.dir;
 	}
+
+	function animationstartHandler(e) {
+
+		if (e.animationName.indexOf('-in-tunnel') > 0) {
+			me.isInTunnel = true;
+		
+			if (window.Howl) {
+				game.sounds['tunnel1'].play();
+			}
+		}
+	}
 	
 	/*
 	 * KC animation end handler
@@ -950,6 +964,15 @@ var KC = function(x, y) {
 				cellEl = cellInfo.cell;
 				me.x = cellInfo.x;
 				me.y = cellInfo.y;
+
+				if (me.isInTunnel) {
+					me.isInTunnel = false;
+
+					if (window.Howl) {
+						game.sounds['tunnel1'].play();
+					}
+				}
+				
 				
 				requestAnimationFrame(function() {
 					maze.putInCell(me.el, cellInfo.x, cellInfo.y);
@@ -1113,6 +1136,9 @@ var KC = function(x, y) {
 		document.body.addEventListener('keydown', move);
 		document.body.addEventListener('keyup', stop);
 		//initGestures();
+
+		// to play the tunnel sound when KC enters the tunnel
+		me.el.addEventListener('animationstart', animationstartHandler);
 		me.el.addEventListener('animationend', animationendHandler);
 		animationDuration = parseFloat(document.defaultView.getComputedStyle(me.el, null).animationDuration)*1000;
 	}
@@ -1771,7 +1797,7 @@ var game = new function () {
 			midY = box.top + h/2,
 			objOnTop = document.elementFromPoint(midX, midY);
 			
-		return objOnTop.__player;
+		return objOnTop? objOnTop.__player : null;
 	}
 	
 	
@@ -1807,7 +1833,9 @@ var game = new function () {
 			// a collision.  This is because he is in a reversed state, he will
 			// appear to the browser in the cell he came from briefly, which
 			// is not perceptually correct. 
-			if (!me.kc || me.kc.isAtEndOfAnimation()) {
+			//
+			// We also don't count collisions that happen inside the tunnel
+			if (!me.kc || me.kc.isAtEndOfAnimation() || me.kc.isInTunnel) {
 				return;
 			}
 

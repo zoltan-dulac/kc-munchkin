@@ -22,6 +22,7 @@
 @player-animation-length: 120vmin / 9;
 @tunnel-length: @player-animation-length * 8;
 @super-drop-shadow-length: 30vw;
+@maze-border-width: 0.5vmin;
 
 html, body {
 	height: 101vh;
@@ -119,6 +120,7 @@ body {
 	left: 50%;
 	margin-left: calc(-92vmin * 9 / 14);
 	perspective: 3000px;
+	border-spacing: 0;
 
 	&[data-has-finished-rendering] {
 		perspective: initial;
@@ -133,8 +135,31 @@ body {
 		width: 0px;
 		display: none;
 	}
+
+	tr {
+		td:first-of-type {
+			border-left-width:  @maze-border-width * 2;
+		}
+
+		td:last-of-type {
+			border-right-width:  @maze-border-width * 2;
+		}
+
+		&:nth-child(2) {
+			td {
+				border-top-width:  @maze-border-width * 2;
+			}
+		}
+
+		&:nth-last-child(2) {
+			td {
+				border-bottom-width:  @maze-border-width * 2;
+			}
+		}
+	}
+
 	td {
-		border: 0.5vmin solid blue;
+		border: @maze-border-width solid blue;
 		width: @maze-cell-width; /*  10.6666vmin; /* 92vmin / 9); */
 		height: @maze-cell-height;
 		text-align: center;
@@ -182,8 +207,8 @@ body {
 		&.n.w::before,
 		&.s.e::after,
 		&.s.w::after {
-			width: 1.2vmin;
-			height: 1.2vmin;
+			width: 1vmin;
+			height: 1vmin;
 			background: blue;
 			display: block;
 			position: absolute;
@@ -191,22 +216,22 @@ body {
 
 		&.n.e::before,
 		&.n.w::before {
-			top: -0.7vmin;
+			top: -@maze-border-width;
 		}
 			
 		&.s.e::after,
 		&.s.w::after {
-			bottom: -0.7vmin;
+			bottom: -@maze-border-width;
 		}
 			
 		&.n.e::before,
 		&.s.e::after {
-			right: -0.7vmin;
+			right: -@maze-border-width;
 		}
 
 		&.n.w::before,
 		&.s.w::after {
-			left: -0.7vmin;
+			left: -@maze-border-width;
 		}
 
 		&.will-empty {
@@ -646,13 +671,22 @@ body {
 		.superDropShadow(0, 0.5);
 	}
 
-	49% { 
+	48% { 
 		opacity: 0;
 		transform: translate3d(-1 * @tunnel-length, 0, 0);
 		.superDropShadow(@super-drop-shadow-length, 1);
 	}
 
+	49% {
+		display: none;
+		transform: translate3d(8 * @player-animation-length + @tunnel-length, 0, 0);
+	}
+
 	51% {
+		display: block;
+	}
+
+	52% {
 		opacity: 0;
 		transform: translate3d(8 * @player-animation-length + @tunnel-length, 0, 0);
 		.superDropShadow(@super-drop-shadow-length, 1);
@@ -677,13 +711,22 @@ body {
 		.superDropShadow(0, 0.5);
 	}
 
-	49% { 
+	48% { 
 		opacity: 0;
 		transform: translate3d(@tunnel-length, 0, 0);
 		.superDropShadow(-@super-drop-shadow-length, 1);
 	}
 
+	49% {
+		display: none;
+		transform: translate3d(-8 * @player-animation-length + @tunnel-length, 0, 0);
+	}
+
 	51% {
+		display: block;
+	}
+
+	52% {
 		opacity: 0;
 		transform: translate3d(-8 * @player-animation-length - @tunnel-length, 0, 0);
 		.superDropShadow(-@super-drop-shadow-length, 1);
