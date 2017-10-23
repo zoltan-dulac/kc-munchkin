@@ -197,7 +197,7 @@ body {
   transform: translate3d(0, 0, 0);
   will-change: transform;
   animation-timing-function: linear;
-  animation-fill-mode: forwards;
+  animation-fill-mode: forwards !important;
   animation-duration: 500ms;
   /* Moving */
 }

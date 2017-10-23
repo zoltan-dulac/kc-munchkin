@@ -553,7 +553,7 @@ var maze = new function () {
 	}
 
 	function makeTunnel() {
-		var y = game.randInt(1, me.height);
+		var y = game.randInt(3, me.height - 2);
 
 		me.leftTunnelCell = me.getCell(1, y),
 		me.rightTunnelCell = me.getCell(me.width, y);
@@ -1621,9 +1621,7 @@ var game = new function () {
 		me.munchers = new Array(3);
 		
 		me.den = null;
-		if (!keepScore) {
-			me.setScore(0);
-		}
+		
 		window.Howl && game.sounds['kc-move'].pause();
 	}
 	
@@ -1980,7 +1978,7 @@ var game = new function () {
 		createDots();
 		createKC();
 		createDen();
-		me.numMunchers = 3;
+		me.numMunchers = parseInt(document.body.dataset.numMunchers);
 		createMunchers();
 		me.setLives();
 		me.dotSpeed = 3000;
