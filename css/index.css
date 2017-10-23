@@ -237,14 +237,14 @@ body {
 }
 td[data-tunnel="w"] .player.w {
   animation-name: go-west-in-tunnel;
-  animation-duration: 2s;
+  animation-duration: 2s !important;
 }
 .player.e {
   animation-name: go-east;
 }
 td[data-tunnel="e"] .player.e {
   animation-name: go-east-in-tunnel;
-  animation-duration: 2s;
+  animation-duration: 2s !important;
 }
 .player.n {
   animation-name: go-north;

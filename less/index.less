@@ -316,7 +316,9 @@ body {
 
 		td[data-tunnel="w"] & {
 			animation-name: go-west-in-tunnel;
-			animation-duration: 2s;
+			// important is here to override duration set by javascript
+			// for the ghosts. 
+			animation-duration: 2s !important;
 		}
 	}
 
@@ -326,7 +328,9 @@ body {
 
 		td[data-tunnel="e"] & {
 			animation-name: go-east-in-tunnel;
-			animation-duration: 2s;
+			// important is here to override duration set by javascript
+			// for the ghosts.
+			animation-duration: 2s !important;
 		}
 	}
 
