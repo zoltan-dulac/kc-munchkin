@@ -308,6 +308,8 @@ var maze = new function () {
 	me.denX = null;
 	me.denY = null;
 	me.graph = null;
+	me.leftTunnelCell = null;
+	me.rightTunnelCell = null;
 	
 	me.el = gid('maze');
 	
@@ -532,6 +534,17 @@ var maze = new function () {
 			}
 		}
 	}
+
+	function makeTunnel() {
+		return;
+		var y = game.randInt(1, me.height);
+
+		me.leftTunnelCell = me.getCell(1, y),
+		me.rightTunnelCell = me.getCell(me.width, y);
+		
+		me.setWall(1, y, 'w', 'remove');
+		me.setWall(me.width, y, 'e', 'remove');
+	}
 	
 	me.setWall = function (x, y, dir, operation) {
 		var cell = me.getCell(x, y),
@@ -583,6 +596,7 @@ var maze = new function () {
 		makePathAroundDen();
 		removeDeadEnds();
 		removeThreeInARow();
+		makeTunnel();
 		generateGraph();
 		setRequestTimeout(makeVisible, 200);
 	};
@@ -1408,7 +1422,7 @@ var preloader = new function () {
 				var image = new Image();
 				image.onload = assetLoadHandler;
 				image.onerror = assetErrorHandler;
-				image.src = `${imageDir}/${preloadImages[i]}.gif`;
+				image.src = `${imageDir}/${preloadImages[i]}.svgz`;
 				images.push(image);
 			}
 			

@@ -54,7 +54,7 @@ body {
   width: 4vmin;
   height: 4vmin;
   background-size: 4vmin 4vmin;
-  background-image: url('../images/kc-still.svg');
+  background-image: url('../images/kc-still.svgz');
   background-repeat: no-repeat;
   image-rendering: -moz-crisp-edges;
   image-rendering: pixelated;
@@ -243,14 +243,14 @@ td.letter-by-letter-animation {
   z-index: 30;
 }
 .dot:after {
-  background-image: url('../images/dot.svg');
+  background-image: url('../images/dot.svgz');
 }
 .dot.pill:after {
-  background-image: url('../images/pill.svg');
+  background-image: url('../images/pill.svgz');
   animation: rotate-pallette 1000ms infinite;
 }
 .muncher:after {
-  background-image: url('../images/muncher-left.svg');
+  background-image: url('../images/muncher-left.svgz');
   background-size: auto 10.22222222vmin;
   animation: muncher-move 250ms steps(2) infinite;
 }
@@ -280,25 +280,25 @@ td.letter-by-letter-animation {
  * EYES
  */
 .muncher.w:before {
-  background-image: url('../images/eyes-left.svg');
+  background-image: url('../images/eyes-left.svgz');
 }
 .muncher.e:before {
-  background-image: url('../images/eyes-left.svg');
+  background-image: url('../images/eyes-left.svgz');
   transform: scaleX(-1);
 }
 .muncher.n:before {
-  background-image: url('../images/eyes-down.svg');
+  background-image: url('../images/eyes-down.svgz');
   transform: scaleY(-1);
   background-position-y: 5.11111111vmin;
 }
 .muncher.s:before {
-  background-image: url('../images/eyes-down.svg');
+  background-image: url('../images/eyes-down.svgz');
 }
 .kc:after {
-  background-image: url('../images/kc-still.svg');
+  background-image: url('../images/kc-still.svgz');
 }
 .kc.move:after {
-  background-image: url('../images/kc-left.svg');
+  background-image: url('../images/kc-left.svgz');
   background-size: auto 10.22222222vmin;
   animation: kc-move 250ms steps(4) infinite;
 }
@@ -311,7 +311,7 @@ td.letter-by-letter-animation {
   transform: rotate(0);
 }
 .kc.die:after {
-  background-image: url('../images/kc-dying.svg');
+  background-image: url('../images/kc-dying.svgz');
   background-size: auto 10.22222222vmin;
   animation: kc-die 1000ms steps(8);
 }
