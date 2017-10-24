@@ -503,9 +503,15 @@ td[data-tunnel="e"] .player.e {
     opacity: 0;
   }
 }
+/*
+ * Note on the go-* animations below: IE/Edge will not apply 
+ * `animation-fill-mode: forwards` correctly when transforming raw viewport
+ * units.  It does work when you wrap them around a `calc()` statement, which
+ * is what we are doing here.
+ */
 @keyframes go-west {
   100% {
-    transform: translate3d(-13.33333333vmin, 0, 0);
+    transform: translate3d(calc(-13.33333333vmin), 0, 0);
   }
 }
 @keyframes go-west-in-tunnel {
@@ -516,7 +522,7 @@ td[data-tunnel="e"] .player.e {
   }
   48% {
     opacity: 0;
-    transform: translate3d(-106.66666667vmin, 0, 0);
+    transform: translate3d(calc(-106.66666667vmin), 0, 0);
     filter: drop-shadow(30vw 0 0 #ffffff) drop-shadow(15vw 0 0 #0000ff) drop-shadow(10vw 0 0 #ff0000);
   }
   49% {
@@ -528,18 +534,18 @@ td[data-tunnel="e"] .player.e {
   }
   52% {
     opacity: 0;
-    transform: translate3d(213.33333333vmin, 0, 0);
+    transform: translate3d(calc(213.33333333vmin), 0, 0);
     filter: drop-shadow(30vw 0 0 #ffffff) drop-shadow(15vw 0 0 #0000ff) drop-shadow(10vw 0 0 #ff0000);
   }
   100% {
     opacity: 1;
-    transform: translate3d(106.66666667vmin, 0, 0);
+    transform: translate3d(calc(106.66666667vmin), 0, 0);
     filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0.5)) drop-shadow(0 0 0 rgba(0, 0, 255, 0.5)) drop-shadow(0 0 0 rgba(255, 0, 0, 0.5));
   }
 }
 @keyframes go-east {
   100% {
-    transform: translate3d(13.33333333vmin, 0, 0);
+    transform: translate3d(calc(13.33333333vmin), 0, 0);
   }
 }
 @keyframes go-east-in-tunnel {
@@ -550,35 +556,35 @@ td[data-tunnel="e"] .player.e {
   }
   48% {
     opacity: 0;
-    transform: translate3d(106.66666667vmin, 0, 0);
+    transform: translate3d(calc(106.66666667vmin), 0, 0);
     filter: drop-shadow(-30vw 0 0 #ffffff) drop-shadow(-15vw 0 0 #0000ff) drop-shadow(-10vw 0 0 #ff0000);
   }
   49% {
     display: none;
-    transform: translate3d(0vmin, 0, 0);
+    transform: translate3d(calc(0vmin), 0, 0);
   }
   51% {
     display: block;
   }
   52% {
     opacity: 0;
-    transform: translate3d(-213.33333333vmin, 0, 0);
+    transform: translate3d(calc(-213.33333333vmin), 0, 0);
     filter: drop-shadow(-30vw 0 0 #ffffff) drop-shadow(-15vw 0 0 #0000ff) drop-shadow(-10vw 0 0 #ff0000);
   }
   100% {
     opacity: 1;
-    transform: translate3d(-106.66666667vmin, 0, 0);
+    transform: translate3d(calc(-106.66666667vmin), 0, 0);
     filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0.5)) drop-shadow(0 0 0 rgba(0, 0, 255, 0.5)) drop-shadow(0 0 0 rgba(255, 0, 0, 0.5));
   }
 }
 @keyframes go-north {
   100% {
-    transform: translate3d(0, -13.33333333vmin, 0);
+    transform: translate3d(0, calc(-13.33333333vmin), 0);
   }
 }
 @keyframes go-south {
   100% {
-    transform: translate3d(0, 13.33333333vmin, 0);
+    transform: translate3d(0, calc(13.33333333vmin), 0);
   }
 }
 @keyframes go-east-demo {

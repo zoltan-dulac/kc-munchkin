@@ -664,8 +664,14 @@ body {
 	}
 }
 
+/*
+ * Note on the go-* animations below: IE/Edge will not apply 
+ * `animation-fill-mode: forwards` correctly when transforming raw viewport
+ * units.  It does work when you wrap them around a `calc()` statement, which
+ * is what we are doing here.
+ */
 @keyframes go-west {
-	100% { transform: translate3d(-1 * @player-animation-length, 0, 0); }
+	100% { transform: translate3d(calc(-1 * @player-animation-length), 0, 0); }
 }
 
 @keyframes go-west-in-tunnel {
@@ -677,7 +683,7 @@ body {
 
 	48% { 
 		opacity: 0;
-		transform: translate3d(-1 * @tunnel-length, 0, 0);
+		transform: translate3d(calc(-1 * @tunnel-length), 0, 0);
 		.superDropShadow(@super-drop-shadow-length, 1);
 	}
 
@@ -692,19 +698,19 @@ body {
 
 	52% {
 		opacity: 0;
-		transform: translate3d(8 * @player-animation-length + @tunnel-length, 0, 0);
+		transform: translate3d(calc(8 * @player-animation-length + @tunnel-length), 0, 0);
 		.superDropShadow(@super-drop-shadow-length, 1);
 	}
 
 	100% {
 		opacity: 1;
-		transform: translate3d(8 * @player-animation-length, 0, 0);
+		transform: translate3d(calc(8 * @player-animation-length), 0, 0);
 		.superDropShadow(0, 0.5);
 	}
 }
 
 @keyframes go-east {
-	100% { transform: translate3d(@player-animation-length, 0, 0); }
+	100% { transform: translate3d(calc(@player-animation-length), 0, 0); }
 }
 
 
@@ -717,13 +723,13 @@ body {
 
 	48% { 
 		opacity: 0;
-		transform: translate3d(@tunnel-length, 0, 0);
+		transform: translate3d(calc(@tunnel-length), 0, 0);
 		.superDropShadow(-@super-drop-shadow-length, 1);
 	}
 
 	49% {
 		display: none;
-		transform: translate3d(-8 * @player-animation-length + @tunnel-length, 0, 0);
+		transform: translate3d(calc(-8 * @player-animation-length + @tunnel-length), 0, 0);
 	}
 
 	51% {
@@ -732,23 +738,23 @@ body {
 
 	52% {
 		opacity: 0;
-		transform: translate3d(-8 * @player-animation-length - @tunnel-length, 0, 0);
+		transform: translate3d(calc(-8 * @player-animation-length - @tunnel-length), 0, 0);
 		.superDropShadow(-@super-drop-shadow-length, 1);
 	}
 
 	100% {
 		opacity: 1;
-		transform: translate3d(-8 * @player-animation-length, 0, 0);
+		transform: translate3d(calc(-8 * @player-animation-length), 0, 0);
 		.superDropShadow(0, 0.5);
 	}
 }
 
 @keyframes go-north {
-	100% { 	transform: translate3d(0, -1 * @player-animation-length, 0); }
+	100% { 	transform: translate3d(0, calc(-1 * @player-animation-length), 0); }
 }
 
 @keyframes go-south {
-	100% { 	transform: translate3d(0, @player-animation-length, 0); }
+	100% { 	transform: translate3d(0, calc(@player-animation-length), 0); }
 }
 
 @keyframes go-east-demo {
