@@ -8,8 +8,19 @@
 		drop-shadow(@length 0 0 rgba(255, 255, 255, @opacity))
 		drop-shadow(@length2 0 0 rgba(0, 0, 255, @opacity))
 		drop-shadow(@length3 0 0 rgba(255, 0, 0, @opacity));
-
 }
+
+.noSelect() {
+	-webkit-touch-callout: none; /* iOS Safari */
+	-webkit-user-select: none; /* Safari */
+	-khtml-user-select: none; /* Konqueror HTML */
+	-moz-user-select: none; /* Firefox */
+	-ms-user-select: none; /* Internet Explorer/Edge */
+	user-select: none; /* Non-prefixed version, currently
+												supported by Chrome and Opera */
+}
+
+
 /*
  * 92vmin is the height of the maze.
  */
@@ -25,10 +36,12 @@
 @maze-border-width: 0.5vmin;
 
 html, body {
-	height: 101vh;
+	height: 100vh;
+	overflow: hidden;
 }
 
 body {
+	position: relative;
 	background: black;
 	color: white;
 	margin: 0;
@@ -106,6 +119,12 @@ body {
 	display: none;
 }
 
+#mobile-controller {
+	position: absolute;
+	top: 0;
+	left: 0;
+}
+
 
 /*
  * Maze styles
@@ -121,6 +140,7 @@ body {
 	margin-left: calc(-92vmin * 9 / 14);
 	perspective: 3000px;
 	border-spacing: 0;
+	.noSelect();
 
 	&[data-has-finished-rendering] {
 		perspective: initial;

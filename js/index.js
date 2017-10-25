@@ -251,6 +251,418 @@ var Cookie = new function() {
 	} 
 }
 
+/*
+ * Collection and Vector2 objects taken from 
+ * https://www.sitepoint.com/create-a-cross-browser-touch-based-joystick-with-hand-js/
+ */
+
+var Collection = function () {
+	this.count = 0;
+	this.collection = {};
+	this.add = function (key, item) {
+			if (this.collection[key] != undefined)
+					return undefined;
+			this.collection[key] = item;
+			return ++this.count
+	}
+	this.remove = function (key) {
+			if (this.collection[key] == undefined)
+					return undefined;
+			delete this.collection[key]
+			return --this.count
+	}
+	this.item = function (key) {
+			return this.collection[key];
+	}
+	this.forEach = function (block) {
+			for (key in this.collection) {
+					if (this.collection.hasOwnProperty(key)) {
+							block(this.collection[key]);
+					}
+			}
+	}
+}
+
+var Vector2 = function (x,y) {
+	this.x= x || 0; 
+	this.y = y || 0; 
+	
+};
+
+Vector2.prototype = {
+
+	reset: function ( x, y ) {
+
+		this.x = x;
+		this.y = y;
+
+		return this;
+
+	},
+
+	toString : function (decPlaces) {
+	 	decPlaces = decPlaces || 3; 
+		var scalar = Math.pow(10,decPlaces); 
+		return "[" + Math.round (this.x * scalar) / scalar + ", " + Math.round (this.y * scalar) / scalar + "]";
+	},
+	
+	clone : function () {
+		return new Vector2(this.x, this.y);
+	},
+	
+	copyTo : function (v) {
+		v.x = this.x;
+		v.y = this.y;
+	},
+	
+	copyFrom : function (v) {
+		this.x = v.x;
+		this.y = v.y;
+	},	
+	
+	magnitude : function () {
+		return Math.sqrt((this.x*this.x)+(this.y*this.y));
+	},
+	
+	magnitudeSquared : function () {
+		return (this.x*this.x)+(this.y*this.y);
+	},
+	
+	normalise : function () {
+		
+		var m = this.magnitude();
+				
+		this.x = this.x/m;
+		this.y = this.y/m;
+
+		return this;	
+	},
+	
+	reverse : function () {
+		this.x = -this.x;
+		this.y = -this.y;
+		
+		return this; 
+	},
+	
+	plusEq : function (v) {
+		this.x+=v.x;
+		this.y+=v.y;
+		
+		return this; 
+	},
+	
+	plusNew : function (v) {
+		 return new Vector2(this.x+v.x, this.y+v.y); 
+	},
+	
+	minusEq : function (v) {
+		this.x-=v.x;
+		this.y-=v.y;
+		
+		return this; 
+	},
+
+	minusNew : function (v) {
+	 	return new Vector2(this.x-v.x, this.y-v.y); 
+	},	
+	
+	multiplyEq : function (scalar) {
+		this.x*=scalar;
+		this.y*=scalar;
+		
+		return this; 
+	},
+	
+	multiplyNew : function (scalar) {
+		var returnvec = this.clone();
+		return returnvec.multiplyEq(scalar);
+	},
+	
+	divideEq : function (scalar) {
+		this.x/=scalar;
+		this.y/=scalar;
+		return this; 
+	},
+	
+	divideNew : function (scalar) {
+		var returnvec = this.clone();
+		return returnvec.divideEq(scalar);
+	},
+
+	dot : function (v) {
+		return (this.x * v.x) + (this.y * v.y) ;
+	},
+	
+	angle : function (useRadians) {
+		
+		return Math.atan2(this.y,this.x) * (useRadians ? 1 : Vector2Const.TO_DEGREES);
+		
+	},
+	
+	rotate : function (angle, useRadians) {
+		
+		var cosRY = Math.cos(angle * (useRadians ? 1 : Vector2Const.TO_RADIANS));
+		var sinRY = Math.sin(angle * (useRadians ? 1 : Vector2Const.TO_RADIANS));
+	
+		Vector2Const.temp.copyFrom(this); 
+
+		this.x= (Vector2Const.temp.x*cosRY)-(Vector2Const.temp.y*sinRY);
+		this.y= (Vector2Const.temp.x*sinRY)+(Vector2Const.temp.y*cosRY);
+		
+		return this; 
+	},	
+		
+	equals : function (v) {
+		return((this.x==v.x)&&(this.y==v.x));
+	},
+	
+	isCloseTo : function (v, tolerance) {	
+		if(this.equals(v)) return true;
+		
+		Vector2Const.temp.copyFrom(this); 
+		Vector2Const.temp.minusEq(v); 
+		
+		return(Vector2Const.temp.magnitudeSquared() < tolerance*tolerance);
+	},
+	
+	rotateAroundPoint : function (point, angle, useRadians) {
+		Vector2Const.temp.copyFrom(this); 
+		//trace("rotate around point "+t+" "+point+" " +angle);
+		Vector2Const.temp.minusEq(point);
+		//trace("after subtract "+t);
+		Vector2Const.temp.rotate(angle, useRadians);
+		//trace("after rotate "+t);
+		Vector2Const.temp.plusEq(point);
+		//trace("after add "+t);
+		this.copyFrom(Vector2Const.temp);
+		
+	}, 
+	
+	isMagLessThan : function (distance) {
+		return(this.magnitudeSquared()<distance*distance);
+	},
+	
+	isMagGreaterThan : function (distance) {
+		return(this.magnitudeSquared()>distance*distance);
+	}
+	
+	
+	// still AS3 to convert : 
+	// public function projectOnto(v:Vector2) : Vector2
+	// {
+	// 		var dp:Number = dot(v);
+	// 
+	// 		var f:Number = dp / ( v.x*v.x + v.y*v.y );
+	// 
+	// 		return new Vector2( f*v.x , f*v.y);
+	// 	}
+	// 
+	// 
+	// public function convertToNormal():void
+	// {
+	// 	var tempx:Number = x; 
+	// 	x = -y; 
+	// 	y = tempx; 
+	// 	
+	// 	
+	// }		
+	// public function getNormal():Vector2
+	// {
+	// 	
+	// 	return new Vector2(-y,x); 
+	// 	
+	// }
+	// 
+	// 
+	// 
+	// public function getClosestPointOnLine ( vectorposition : Point, targetpoint : Point ) : Point
+	// {
+	// 	var m1 : Number = y / x ;
+	// 	var m2 : Number = x / -y ;
+	// 	
+	// 	var b1 : Number = vectorposition.y - ( m1 * vectorposition.x ) ;
+	// 	var b2 : Number = targetpoint.y - ( m2 * targetpoint.x ) ;
+	// 	
+	// 	var cx : Number = ( b2 - b1 ) / ( m1 - m2 ) ;
+	// 	var cy : Number = m1 * cx + b1 ;
+	// 	
+	// 	return new Point ( cx, cy ) ;
+	// }
+	// 
+
+};
+
+Vector2Const = {
+	TO_DEGREES : 180 / Math.PI,		
+	TO_RADIANS : Math.PI / 180,
+	temp : new Vector2()
+};
+
+
+/*
+ * Ideas here taken from https://www.sitepoint.com/create-a-cross-browser-touch-based-joystick-with-hand-js/
+ */
+var mobileController = new function () {
+		
+	var me=this,
+		bodyEl,
+		canvas,
+		c, // c is the canvas' context 2D
+		container,
+		halfWidth,
+		halfHeight,
+		leftPointerID = -1,
+		leftPointerPos = new Vector2(0, 0),
+		leftPointerStartPos = new Vector2(0, 0),
+		leftVector = new Vector2(0, 0);
+
+	var pointers; // collections of pointers
+	
+
+	window.onorientationchange = resetCanvas;
+	window.onresize = resetCanvas;
+
+	me.init = function () {
+			bodyEl = document.body;
+			setupCanvas();
+			pointers = new Collection();
+			canvas.addEventListener('pointerdown', onPointerDown, false);
+			canvas.addEventListener('pointermove', onPointerMove, false);
+			canvas.addEventListener('pointerup', onPointerUp, false);
+			canvas.addEventListener('pointerout', onPointerUp, false);
+			bodyEl.addEventListener('touchstart', function(e){ e.preventDefault(); });
+			requestAnimationFrame(draw);
+	}
+
+	function resetCanvas(e) {
+			// resize the canvas - but remember - this clears the canvas too. 
+			canvas.width = window.innerWidth;
+			canvas.height = window.innerHeight;
+
+			halfWidth = canvas.width / 2;
+			halfHeight = canvas.height / 2;
+
+			//make sure we scroll to the top left. 
+			window.scrollTo(0, 0);
+	}
+
+	function draw() {
+			c.clearRect(0, 0, canvas.width, canvas.height);
+
+			pointers.forEach(function (pointer) {
+					if (pointer.identifier == leftPointerID) {
+							c.beginPath();
+							c.strokeStyle = "cyan";
+							c.lineWidth = 6;
+							c.arc(leftPointerStartPos.x, leftPointerStartPos.y, 40, 0, Math.PI * 2, true);
+							c.stroke();
+							c.beginPath();
+							c.strokeStyle = "cyan";
+							c.lineWidth = 2;
+							c.arc(leftPointerStartPos.x, leftPointerStartPos.y, 60, 0, Math.PI * 2, true);
+							c.stroke();
+							c.beginPath();
+							c.strokeStyle = "cyan";
+							c.arc(leftPointerPos.x, leftPointerPos.y, 40, 0, Math.PI * 2, true);
+							c.stroke();
+
+					} else {
+
+							c.beginPath();
+							c.fillStyle = "white";
+							c.fillText("type : " + pointer.type + " id : " + pointer.identifier + " x:" + pointer.x + 
+	" y:" + pointer.y, pointer.x + 30, pointer.y - 30);
+
+							c.beginPath();
+							c.strokeStyle = "red";
+							c.lineWidth = "6";
+							c.arc(pointer.x, pointer.y, 40, 0, Math.PI * 2, true);
+							c.stroke();
+					}
+			});
+
+			requestAnimationFrame(draw);
+	}
+
+	function givePointerType(event) {
+			switch (event.pointerType) {
+					case event.POINTER_TYPE_MOUSE:
+							return "MOUSE";
+							break;
+					case event.POINTER_TYPE_PEN:
+							return "PEN";
+							break;
+					case event.POINTER_TYPE_TOUCH:
+							return "TOUCH";
+							break;
+			}
+	}
+
+	function onPointerDown(e) {
+			var newPointer = { identifier: e.pointerId, x: e.clientX, y: e.clientY, 
+			type: givePointerType(e) };
+			if ((leftPointerID < 0)) {
+					leftPointerID = e.pointerId;
+					leftPointerStartPos.reset(e.clientX, e.clientY);
+					leftPointerPos.copyFrom(leftPointerStartPos);
+					leftVector.reset(0, 0);
+			}
+			pointers.add(e.pointerId, newPointer);
+	}
+
+	function onPointerMove(e) {
+			if (leftPointerID == e.pointerId) {
+					leftPointerPos.reset(e.clientX, e.clientY);
+					leftVector.copyFrom(leftPointerPos);
+					leftVector.minusEq(leftPointerStartPos);
+			}
+			else {
+					if (pointers.item(e.pointerId)) {
+							pointers.item(e.pointerId).x = e.clientX;
+							pointers.item(e.pointerId).y = e.clientY;
+					}
+			}
+	}
+
+	function onPointerUp(e) {
+			var deltaX, deltaY, dir;
+			if (leftPointerID == e.pointerId) {
+					leftPointerID = -1;
+					leftVector.reset(0, 0);
+
+			}
+			leftVector.reset(0, 0);
+
+			pointers.remove(e.pointerId);
+
+			deltaX = leftPointerPos.x - leftPointerStartPos.x;
+			deltaY = leftPointerPos.y - leftPointerStartPos.y;
+
+
+			if (Math.abs(deltaX) > Math.abs(deltaY)) {
+				dir = (deltaX > 0 ? "Right" : "Left");
+			} else {
+				dir = (deltaY > 0 ? "Down" : "Up");
+			}
+
+			if (dir) {
+				game.kc.moveHelper(null, dir);
+			}
+	}
+
+	function setupCanvas() {
+			canvas = document.getElementById('mobile-controller');
+			c = canvas.getContext('2d');
+			resetCanvas();
+			c.strokeStyle = "#ffffff";
+			c.lineWidth = 2;
+	}	
+}
+
+
+
+
 Node.prototype.add = function(tag, cnt, txt, datasetItem) {
 	for (var i = 0; i < cnt; i++) {
 		var newNode = ce(tag, txt);
@@ -827,30 +1239,11 @@ var KC = function(x, y) {
 		isSoundPlaying = false;
 	}
 	
-	function swipeEvent(e) {
-		var data = e.detail.data[0],
-			dir = data.currentDirection;
-		
-		if ((0 <= dir && dir<= 45) || (315 <= dir && dir <= 360)) {
-			moveHelper(e, 'ArrowRight');
-		} else if (46 <= dir && dir <= 135) {
-			moveHelper(e, 'ArrowUp');
-		} else if (136 <= dir && dir <= 225) {
-			moveHelper(e, 'ArrowLeft');
-		} else {
-			moveHelper(e, 'ArrowDown');
-		}
-		
-		if (dir) {
-			moveHelper(e, dir);
-		}
-	}
-
 	function move(e) {
-		moveHelper(e, e.key || ('Arrow' + e.keyIdentifier));
+		me.moveHelper(e, e.key || ('Arrow' + e.keyIdentifier));
 	}
 	
-	function moveHelper(e, key) {
+	me.moveHelper = function (e, key) {
 		var cmdBeforeLast = lastCmd;
 		
 		/*
@@ -860,25 +1253,25 @@ var KC = function(x, y) {
 			case "ArrowDown":
 			case "Down":
 				lastCmd = 's';
-				e.preventDefault();
+				e && e.preventDefault();
 				break;
 			case "ArrowUp":
 			case "Up":
 				lastCmd = 'n';
-				e.preventDefault();
+				e && e.preventDefault();
 				break;
 			case "ArrowLeft":
 			case "Left":
 				lastCmd = 'w';
-				e.preventDefault();
+				e && e.preventDefault();
 				break;
 			case "ArrowRight":
 			case "Right":
 				lastCmd = 'e';
-				e.preventDefault();
+				e &&e.preventDefault();
 				break;
 			case " ":
-				pause(e);
+				e && pause(e);
 		}
 		
 		// hack to deal when KC gets stuck in the edge case of moving back and forth
@@ -1998,6 +2391,7 @@ var game = new function () {
 		initSounds();
 		setRequestTimeout(demo.start, 500);
 		getHighScore();
+		mobileController.init();
 	}
 	
 	me.log = console.log

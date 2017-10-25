@@ -5,9 +5,11 @@
  */
 html,
 body {
-  height: 101vh;
+  height: 100vh;
+  overflow: hidden;
 }
 body {
+  position: relative;
   background: black;
   color: white;
   margin: 0;
@@ -74,6 +76,11 @@ body {
 #overlay.hidden {
   display: none;
 }
+#mobile-controller {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
 /*
  * Maze styles
  */
@@ -88,6 +95,19 @@ body {
   margin-left: calc(-59.14285714vmin);
   perspective: 3000px;
   border-spacing: 0;
+  -webkit-touch-callout: none;
+  /* iOS Safari */
+  -webkit-user-select: none;
+  /* Safari */
+  -khtml-user-select: none;
+  /* Konqueror HTML */
+  -moz-user-select: none;
+  /* Firefox */
+  -ms-user-select: none;
+  /* Internet Explorer/Edge */
+  user-select: none;
+  /* Non-prefixed version, currently
+												supported by Chrome and Opera */
 }
 #maze[data-has-finished-rendering] {
   perspective: initial;
