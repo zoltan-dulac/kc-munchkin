@@ -176,8 +176,14 @@ body {
 #maze td.will-empty {
   will-change: contents;
 }
+#maze td.will-empty * {
+  display: none;
+}
 #maze td.will-fill {
   will-change: contents;
+}
+#maze td.will-fill * {
+  display: none;
 }
 #maze td.letter-by-letter-animation {
   will-change: contents;
