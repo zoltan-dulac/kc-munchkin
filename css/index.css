@@ -1,8 +1,5 @@
 @import "../fonts/PressStart2P/stylesheet.css";
 @import "../fonts/johnny-fever/stylesheet.css";
-/*
- * 92vmin is the height of the maze.
- */
 html,
 body {
   height: 100vh;
@@ -378,6 +375,13 @@ td[data-tunnel="e"] .player.e {
 .player.muncher.eaten:after {
   opacity: 0;
 }
+.player.tree:after {
+  background-image: url('../images/tree.svgz');
+  background-size: auto 10.22222222vmin;
+  animation: tree-appear 1000ms steps(5);
+  animation-iteration-count: 1;
+  animation-fill-mode: forwards;
+}
 #bonus-display {
   position: absolute;
   font-size: 2vmin;
@@ -512,6 +516,11 @@ td[data-tunnel="e"] .player.e {
     background-position-x: -20.44444444vmin;
   }
 }
+@keyframes tree-appear {
+  100% {
+    background-position-x: -51.11111111vmin;
+  }
+}
 @keyframes muncher-flash {
   0%,
   50%,
@@ -637,6 +646,10 @@ td[data-tunnel="e"] .player.e {
   }
 }
 @media screen and (max-aspect-ratio: 31 / 26) {
+  html,
+  body {
+    height: calc(100vh - 73px);
+  }
   .stats {
     width: 100vw;
     top: 0.8vw;
@@ -652,37 +665,44 @@ td[data-tunnel="e"] .player.e {
   }
   #maze {
     width: 100vw;
-    height: 77vw;
+    height: 77.77777778vw;
     top: 5vw;
     bottom: auto;
     left: 0;
-    right: autp;
+    right: auto;
     margin-left: 0;
   }
   .player {
-    width: calc(10.22222222vw);
-    height: calc(10.22222222vw);
-    top: 1.5vw;
-    left: 0vw;
+    width: calc(11.11111111111111vw - @maze-border-width - );
+    height: calc(11.111111111111112vw - @maze-border-width);
+    top: 1px;
+    left: 1px;
+  }
+  .n.e::before,
+  .n.w::before,
+  .s.e::after,
+  .s.w::after {
+    width: 1vw;
+    height: 1vw;
   }
   @keyframes go-west {
     100% {
-      transform: translate3d(calc(-12.22222222vw), 0, 0);
+      transform: translate3d(calc(-12.11111111vw), 0, 0);
     }
   }
   @keyframes go-east {
     100% {
-      transform: translate3d(calc(12.22222222vw), 0, 0);
+      transform: translate3d(calc(12.11111111vw), 0, 0);
     }
   }
   @keyframes go-north {
     100% {
-      transform: translate3d(0, calc(-12.22222222vw), 0);
+      transform: translate3d(0, calc(-12.11111111vw), 0);
     }
   }
   @keyframes go-south {
     100% {
-      transform: translate3d(0, calc(12.22222222vw), 0);
+      transform: translate3d(0, calc(12.11111111vw), 0);
     }
   }
 }

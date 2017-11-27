@@ -21,9 +21,7 @@
 }
 
 
-/*
- * 92vmin is the height of the maze.
- */
+
 @maze-height: 92vmin;
 @maze-num-columns: 9;
 @maze-num-rows: 7;
@@ -508,6 +506,16 @@ body {
 		}
 	}
 
+	&.tree {
+		&:after {
+			background-image: url('../images/tree.svgz');
+			background-size: auto @maze-cell-width;
+			animation: tree-appear 1000ms steps(5);
+			animation-iteration-count: 1;
+			animation-fill-mode: forwards;
+		}
+	}
+
 }
 
 #bonus-display {
@@ -675,6 +683,10 @@ body {
 	100% { background-position-x: -1 * @maze-cell-width * 2 }
 }
 
+@keyframes tree-appear {
+	100% { background-position-x: -1 * @maze-cell-width * 5 }
+}
+
 @keyframes muncher-flash {
 	0%, 50%, 100% {
 		 opacity: 1;
@@ -812,7 +824,23 @@ body {
 }
 
 @media screen and (max-aspect-ratio: 31 / 26) {
+	@maze-width: 100vw;
+
+	@maze-num-columns: 9;
+	@maze-num-rows: 7;
+	@maze-height: @maze-width * (@maze-num-rows / @maze-num-columns);
+	@maze-cell-height: @maze-height / @maze-num-rows;
+	@maze-cell-width:  @maze-width / @maze-num-columns;
+	@player-animation-length-horiz: @maze-cell-width + 2 * @maze-border-width;
+	@player-animation-length-vert: @maze-cell-height + 2 * @maze-border-width;
+	@tunnel-length: @player-animation-length * 8;
+	@super-drop-shadow-length: 30vw;
+	@maze-border-width: 0.5vw;
 	
+	html, body {
+		height: calc(~"100vh - 73px");
+	}
+
 	.stats {
 		width: 100vw;
 		top: 0.8vw;
@@ -830,36 +858,44 @@ body {
 	}
 	
 	#maze {
-		width: 100vw;
-		height: 77vw;
+		width: @maze-width;
+		height: @maze-height;
 		top: 5vw;
 		bottom: auto;
 		left: 0;
-		right: autp;
+		right: auto;
 		margin-left: 0;
 	}
 	
 	.player {
-		width: calc(92vw / 9 );
-		height: calc(92vw / 9 );
-		top: 1.5vw;
-		left: 0vw;
+		width: calc(~"@{maze-cell-width} - @maze-border-width - ");
+		height: calc(~"@{maze-cell-height} - @maze-border-width");
+		top: 1px;
+		left: 1px;
 	}
 	
+	&.n.e::before,
+	&.n.w::before,
+	&.s.e::after,
+	&.s.w::after {
+		width: @maze-border-width * 2;
+		height: @maze-border-width * 2;
+	}
+
 	@keyframes go-west {
-		100% { transform: translate3d(calc(-110vw / 9), 0, 0); }
+		100% { transform: translate3d(calc(-@player-animation-length-horiz), 0, 0); }
 	}
 	
 	@keyframes go-east {
-		100% { transform: translate3d(calc(110vw / 9 ), 0, 0); }
+		100% { transform: translate3d(calc(@player-animation-length-horiz), 0, 0); }
 	}
 	
 	@keyframes go-north {
-		100% { 	transform: translate3d(0, calc(-110vw / 9 ), 0); }
+		100% { 	transform: translate3d(0, calc(-@player-animation-length-vert), 0); }
 	}
 	
 	@keyframes go-south {
-		100% { 	transform: translate3d(0, calc(110vw / 9 ), 0); }
+		100% { 	transform: translate3d(0, calc(@player-animation-length-vert), 0); }
 	}
 	
 

@@ -446,51 +446,6 @@ Vector2.prototype = {
 	isMagGreaterThan : function (distance) {
 		return(this.magnitudeSquared()>distance*distance);
 	}
-	
-	
-	// still AS3 to convert : 
-	// public function projectOnto(v:Vector2) : Vector2
-	// {
-	// 		var dp:Number = dot(v);
-	// 
-	// 		var f:Number = dp / ( v.x*v.x + v.y*v.y );
-	// 
-	// 		return new Vector2( f*v.x , f*v.y);
-	// 	}
-	// 
-	// 
-	// public function convertToNormal():void
-	// {
-	// 	var tempx:Number = x; 
-	// 	x = -y; 
-	// 	y = tempx; 
-	// 	
-	// 	
-	// }		
-	// public function getNormal():Vector2
-	// {
-	// 	
-	// 	return new Vector2(-y,x); 
-	// 	
-	// }
-	// 
-	// 
-	// 
-	// public function getClosestPointOnLine ( vectorposition : Point, targetpoint : Point ) : Point
-	// {
-	// 	var m1 : Number = y / x ;
-	// 	var m2 : Number = x / -y ;
-	// 	
-	// 	var b1 : Number = vectorposition.y - ( m1 * vectorposition.x ) ;
-	// 	var b2 : Number = targetpoint.y - ( m2 * targetpoint.x ) ;
-	// 	
-	// 	var cx : Number = ( b2 - b1 ) / ( m1 - m2 ) ;
-	// 	var cy : Number = m1 * cx + b1 ;
-	// 	
-	// 	return new Point ( cx, cy ) ;
-	// }
-	// 
-
 };
 
 Vector2Const = {
@@ -1144,6 +1099,35 @@ var maze = new function () {
 	}
 	
 };
+
+/*******************
+* TREE
+*******************/
+
+var Tree = function(x, y, index, classes) {
+	var
+		me = this,
+		cellEl = maze.getCell(x, y);
+		
+	me.x = x;
+	me.y = y;
+	me.el = null;
+	me.isDot = true;
+	me.index = index;;
+	
+	function init() {
+		me.el = ce('div');
+		me.el.__player = me;
+		me.el.className = `tree ${(classes || '')} player`;
+		maze.putInCell(me.el, x, y);
+	}
+	
+	me.stop = function() {
+		me.el.classList.add('stop');
+	}
+	
+	init();
+}
 
 /*******************
  * DOT
@@ -1911,12 +1895,14 @@ var game = new function () {
 		stateTimeout,
 		bonusDisplayEl = document.getElementById('bonus-display'),
 		munchersEaten = 0,
-		numActiveDots = 0;
+		numActiveDots = 0,
+		level = 0;
 	
 	me.dots = [],
 	me.munchers = [],
 	me.numMunchers = 0,
 	me.kc,
+	me.trees = [],
 	me.den,
 	me.dotSpeed;
 	me.canEatMunchers = false,
@@ -2067,6 +2053,12 @@ var game = new function () {
 			me.munchers[i] = new Muncher(5 , 5, 'n', 450 + 50 * i, i);
 		}
 		
+	}
+
+	function startTreeTimeout() {
+		me.trees.push(new Tree(game.randInt(1, maze.width - 1), game.randInt(1, maze.height - 1)));
+
+		setRequestTimeout(startTreeTimeout, 5000);
 	}
 	
 	me.stopPlayers = function () {
@@ -2373,6 +2365,7 @@ var game = new function () {
 		createDen();
 		me.numMunchers = parseInt(document.body.dataset.numMunchers);
 		createMunchers();
+		startTreeTimeout();
 		me.setLives();
 		me.dotSpeed = 3000;
 		me.setState('');
