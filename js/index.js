@@ -1980,9 +1980,12 @@ var game = new function () {
 	}
 	
 	function setHighScore(s) {
+		var exp = new Date();
+		exp.setDate(exp.getDate() + 20 * 365); // 20 years from now.
+
 		highScore = s;
 		highScoreEl.innerHTML = s;
-		Cookie.set('kc-hi', s);
+		Cookie.set('kc-hi', s, exp);
 	}
 
 	function getHighScore() {
@@ -2346,14 +2349,14 @@ var game = new function () {
 	}
 	
 	me.showGameOver = function () {
+		if (score > highScore) {
+			setHighScore(score);
+		}
 		me.setLives();
 		overlay.className = '';
 		demo.showLetterByLetter(overlayEl, 'Game Over', 0, 100, function () {
 			setRequestTimeout(function () {
 				
-				if (score > highScore) {
-					setHighScore(score);
-				}
 				game.teardown();
 				overlayEl.innerHTML = '';
 				overlayEl.className = 'hidden';
