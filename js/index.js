@@ -615,7 +615,13 @@ var mobileController = new function () {
 	}	
 }
 
+types = {
+	KC: -1,
+	DOT: 0,
+	TREE: 1,
+	MUNCHER: 2
 
+},
 
 
 Node.prototype.add = function(tag, cnt, txt, datasetItem) {
@@ -1107,25 +1113,96 @@ var maze = new function () {
 var Tree = function(x, y, index, classes) {
 	var
 		me = this,
-		cellEl = maze.getCell(x, y);
+		cellEl = maze.getCell(x, y),
+		removeCallback;
 		
 	me.x = x;
 	me.y = y;
 	me.el = null;
-	me.isDot = true;
-	me.index = index;;
+	me.index = index;
+	me.type = types.TREE;
 	
 	function init() {
 		me.el = ce('div');
 		me.el.__player = me;
 		me.el.className = `tree ${(classes || '')} player`;
 		maze.putInCell(me.el, x, y);
+		me.el.addEventListener('animationend', animationendHandler)
+	}
+
+	me.isEdible = function () {
+		return  !(me.el.classList.contains('removing'));
 	}
 	
-	me.stop = function() {
+	me.stop = function () {
 		me.el.classList.add('stop');
 	}
+
+	me.die = function (callback) {
+		removeCallback = callback;
+		me.el.classList.add('removing')
+	}
+
+	function animationendHandler(e) {
+		if (e.animationName === 'tree-disappear') {
+			remove();
+			if (removeCallback) {
+				removeCallback();
+			}
+		}
+	}
+
+	function remove () {
+		me.el.removeEventListener('animationend', animationendHandler);
+		me.el.parentNode.removeChild(me.el);
+		me.el = null;
+	}
 	
+	init();
+}
+
+/*******************
+ * FOREST
+ *******************/
+function Forest () {
+	var me = this,
+		max = 6,
+		nextIndex = 0,
+		interval;
+
+	me.trees = {};
+
+	function init() {
+		add();
+		interval = setRequestInterval(add, 5000);
+	}
+
+	function add() {
+		if (Object.keys(me.trees).length <= max) {
+			addHelper();
+		}
+	}
+
+	function addHelper() {
+		me.trees['t' + nextIndex] = (new Tree(game.randInt(1, maze.width - 1), game.randInt(1, maze.height - 1), nextIndex));
+		nextIndex++;
+	}
+
+	me.deleteTree = function(index) {
+		var treeIndex = 't' + index,
+			tree = me.trees[treeIndex];
+
+		tree.remove(function () {
+			delete(me.trees[treeIndex]);
+		});
+	}
+
+	me.delete = function () {
+		if (interval) {
+			clearRequestTimeout(interval);
+		}
+	}
+
 	init();
 }
 
@@ -1140,8 +1217,8 @@ var Dot = function(x, y, index, classes) {
 	me.x = x;
 	me.y = y;
 	me.el = null;
-	me.isDot = true;
-	me.index = index;;
+	me.index = index;
+	me.type = types.DOT;
 	
 	function animationendHandler(e) {
 		var cellInfo = maze.getCellInDir(me.x, me.y, me.dir);
@@ -1583,7 +1660,7 @@ var Muncher = function (x, y, dir, speed, index) {
 	me.speed = speed;
 	me.state = modes.SCATTER;
 	me.index = index;
-	me.isEnemy = true;
+	me.type = types.MUNCHER;
 	
 	/* Muncher animation end handler */
 	function animationendHandler(e) {
@@ -1898,14 +1975,14 @@ var game = new function () {
 		numActiveDots = 0,
 		level = 0;
 	
-	me.dots = [],
-	me.munchers = [],
-	me.numMunchers = 0,
-	me.kc,
-	me.trees = [],
-	me.den,
-	me.dotSpeed;
-	me.canEatMunchers = false,
+	me.dots = [];
+	me.munchers = [];
+	me.numMunchers = 0;
+	me.kc = null;
+	me.forest = null;
+	me.den = null;
+	me.dotSpeed = null;
+	me.canEatMunchers = false;
 	me.sounds = {};
 	me.lives = 3;
 	
@@ -1994,6 +2071,9 @@ var game = new function () {
 		delete(me.munchers);
 		delete(me.kc);
 		delete(me.den);
+
+		me.forest.delete();
+		delete(me.forest);
 		
 		clearRequestInterval(collisionInterval);
 		me.dots = [];
@@ -2228,35 +2308,44 @@ var game = new function () {
 				i;
 			
 			/*
-			 * Only if playerOnTop is a muncher.
+			 * Only if playerOnTop is not KC
 			 */
 			if (playerOnTop) {
 				if (playerOnTop !== me.kc) {
-					if (playerOnTop.isEnemy) {
-						if (playerOnTop.isEdible()) {
-							playerOnTop.die();
-							munchersEaten++;
-							me.setScore(Math.pow(2, munchersEaten) * 100, true, true);
-						} else if (!playerOnTop.isEaten()){
-							me.kc.die();
-						}
-					} else if (playerOnTop.isDot) {
-						playerOnTop.stop();
-						numActiveDots --;
-						
-						if (playerOnTop.el.classList.contains('pill')) {
-							window.Howl && game.sounds['eat-pill'].play();
-							me.setScore(50, true);
-							me.setState('pill-eaten');
-							setMunchersEdibility(true);
-						} else {
-							window.Howl && game.sounds['eat-dot'].play();
-							me.setScore(10, true);
-						}
-						me.dotSpeed -= 250;
-						if (numActiveDots === 0) {
-							me.reset(true);
-						}
+					switch(playerOnTop.type) {
+						case types.MUNCHER:
+							if (playerOnTop.isEdible()) {
+								playerOnTop.die();
+								munchersEaten++;
+								me.setScore(Math.pow(2, munchersEaten) * 100, true, true);
+							} else if (!playerOnTop.isEaten()){
+								me.kc.die();
+							}
+							break;
+						case types.TREE:
+							if (playerOnTop.isEdible()) {
+								playerOnTop.die();
+								me.setScore(100, true, false);
+							}
+						break;
+						case types.DOT:
+							playerOnTop.stop();
+							numActiveDots --;
+							
+							if (playerOnTop.el.classList.contains('pill')) {
+								window.Howl && game.sounds['eat-pill'].play();
+								me.setScore(50, true);
+								me.setState('pill-eaten');
+								setMunchersEdibility(true);
+							} else {
+								window.Howl && game.sounds['eat-dot'].play();
+								me.setScore(10, true);
+							}
+							me.dotSpeed -= 250;
+							if (numActiveDots === 0) {
+								me.reset(true);
+							}
+							break;
 					}
 				}
 			}
@@ -2365,7 +2454,10 @@ var game = new function () {
 		createDen();
 		me.numMunchers = parseInt(document.body.dataset.numMunchers);
 		createMunchers();
-		startTreeTimeout();
+
+		// We need to set a conditional on when trees grow.
+		me.forest = new Forest();
+		
 		me.setLives();
 		me.dotSpeed = 3000;
 		me.setState('');

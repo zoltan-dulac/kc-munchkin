@@ -375,12 +375,18 @@ td[data-tunnel="e"] .player.e {
 .player.muncher.eaten:after {
   opacity: 0;
 }
+.player.tree {
+  z-index: 29;
+}
 .player.tree:after {
-  background-image: url('../images/tree.svgz');
+  background-image: url('../images/tree.gif');
   background-size: auto 10.22222222vmin;
   animation: tree-appear 1000ms steps(5);
   animation-iteration-count: 1;
   animation-fill-mode: forwards;
+}
+.player.tree.removing:after {
+  animation-name: tree-disappear;
 }
 #bonus-display {
   position: absolute;
@@ -519,6 +525,14 @@ td[data-tunnel="e"] .player.e {
 @keyframes tree-appear {
   100% {
     background-position-x: -51.11111111vmin;
+  }
+}
+@keyframes tree-disappear {
+  0% {
+    background-position-x: -51.11111111vmin;
+  }
+  100% {
+    background-position-x: 0;
   }
 }
 @keyframes muncher-flash {

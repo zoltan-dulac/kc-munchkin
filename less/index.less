@@ -507,12 +507,20 @@ body {
 	}
 
 	&.tree {
+		z-index: 29; 
+
 		&:after {
-			background-image: url('../images/tree.svgz');
+			background-image: url('../images/tree.gif');
 			background-size: auto @maze-cell-width;
 			animation: tree-appear 1000ms steps(5);
 			animation-iteration-count: 1;
 			animation-fill-mode: forwards;
+		}
+
+		&.removing {
+			&:after {
+				animation-name: tree-disappear;
+			}
 		}
 	}
 
@@ -685,6 +693,14 @@ body {
 
 @keyframes tree-appear {
 	100% { background-position-x: -1 * @maze-cell-width * 5 }
+}
+
+@keyframes tree-disappear {
+	0% {
+		background-position-x: -1 * @maze-cell-width * 5;
+	}
+
+	100% { background-position-x: 0}
 }
 
 @keyframes muncher-flash {
