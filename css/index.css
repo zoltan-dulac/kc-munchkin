@@ -218,6 +218,9 @@ body {
   animation-duration: 500ms;
   /* Moving */
 }
+.player.slow {
+  animation-play-state: paused;
+}
 .player.paused {
   animation-play-state: paused;
 }
@@ -379,7 +382,7 @@ td[data-tunnel="e"] .player.e {
   z-index: 29;
 }
 .player.tree:after {
-  background-image: url('../images/tree.gif');
+  background-image: url('../images/tree.gif	');
   background-size: auto 10.22222222vmin;
   animation: tree-appear 1000ms steps(5);
   animation-iteration-count: 1;

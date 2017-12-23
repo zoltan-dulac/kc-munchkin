@@ -291,6 +291,10 @@ body {
 	// needs them to be.
 	animation-duration: 500ms;
 
+	&.slow {
+		animation-play-state: paused;
+	}
+
 
 
 	&.paused {
@@ -510,7 +514,7 @@ body {
 		z-index: 29; 
 
 		&:after {
-			background-image: url('../images/tree.gif');
+			background-image: url('../images/tree.gif	');
 			background-size: auto @maze-cell-width;
 			animation: tree-appear 1000ms steps(5);
 			animation-iteration-count: 1;

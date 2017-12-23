@@ -1145,17 +1145,18 @@ var Tree = function(x, y, index, classes) {
 
 	function animationendHandler(e) {
 		if (e.animationName === 'tree-disappear') {
-			remove();
+			me.remove();
 			if (removeCallback) {
 				removeCallback();
 			}
 		}
 	}
 
-	function remove () {
+	me.remove = function () {
 		me.el.removeEventListener('animationend', animationendHandler);
 		me.el.parentNode.removeChild(me.el);
 		me.el = null;
+		game.forest.deleteTree(me.index);
 	}
 	
 	init();
@@ -1184,7 +1185,17 @@ function Forest () {
 	}
 
 	function addHelper() {
-		me.trees['t' + nextIndex] = (new Tree(game.randInt(1, maze.width - 1), game.randInt(1, maze.height - 1), nextIndex));
+		var cellHasNoTree = false,
+			x, y, cell, cellHasNoTreeisOK;
+
+		while (!cellHasNoTree) {
+			x = game.randInt(1, maze.width - 1);
+			y = game.randInt(1, maze.height - 1);
+			cell = maze.getCell(x, y);
+			cellHasNoTree = (cell.getElementsByClassName('tree').length === 0);
+		}
+
+		me.trees['t' + nextIndex] = (new Tree(x, y, nextIndex));
 		nextIndex++;
 	}
 
@@ -1192,9 +1203,8 @@ function Forest () {
 		var treeIndex = 't' + index,
 			tree = me.trees[treeIndex];
 
-		tree.remove(function () {
-			delete(me.trees[treeIndex]);
-		});
+		delete(me.trees[treeIndex]);
+			
 	}
 
 	me.delete = function () {
@@ -1445,6 +1455,7 @@ var KC = function(x, y) {
 		//requestAnimationFrame(function() {
 			elStyle.setProperty('display', 'none');
 			elStyle.setProperty('animation-name', 'fake-animation-name', 'important');
+			
 			requestAnimationFrame(function() {
 				elStyle.setProperty('animation-delay', delayTime, 'important');
 				elStyle.removeProperty('animation-name');
@@ -1459,7 +1470,6 @@ var KC = function(x, y) {
 		var classList = me.el.classList,
 			now;
 		
-		// ZOLTAN
 		if (doReverse) {
 			// We need to figure out what percentage of the animation we were in
 			now = new Date().getTime();
@@ -1580,6 +1590,18 @@ var KC = function(x, y) {
 	function initGestures() {
 		var activeRegion = ZingTouch.Region(document.body);
 		activeRegion.bind(maze.el, 'swipe', swipeEvent)
+	}
+
+	me.setSpeed = function(className) {
+		requestAnimationFrame(function () {
+			
+			if (className) {
+				me.el.classList.add('slow');
+			} else {
+				me.el.classList.remove('slow');
+			}
+
+		})
 	}
 	
 	function init() {
@@ -2324,8 +2346,11 @@ var game = new function () {
 							break;
 						case types.TREE:
 							if (playerOnTop.isEdible()) {
-								playerOnTop.die();
-								me.setScore(100, true, false);
+								me.kc.setSpeed('slow');
+								playerOnTop.die(function () {
+									me.kc.setSpeed();
+									me.setScore(100, true, true);
+								});
 							}
 						break;
 						case types.DOT:
