@@ -1596,9 +1596,9 @@ var KC = function(x, y) {
 		requestAnimationFrame(function () {
 			
 			if (className) {
-				me.el.classList.add('slow');
+				me.el.classList.add('paused');
 			} else {
-				me.el.classList.remove('slow');
+				me.el.classList.remove('paused');
 			}
 
 		})
