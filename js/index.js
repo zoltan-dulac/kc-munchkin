@@ -1167,7 +1167,7 @@ var Tree = function(x, y, index, classes) {
  *******************/
 function Forest () {
 	var me = this,
-		max = -1,
+		max = 3,
 		nextIndex = 0,
 		interval;
 
