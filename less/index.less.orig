@@ -512,7 +512,11 @@ body {
 		z-index: 29; 
 
 		&:after {
+<<<<<<< HEAD
+			background-image: url('../images/tree.gif	');
+=======
 			background-image: url('../images/tree.gif');
+>>>>>>> 1e1b515a57b51e9c92a17fe658fae5641585fa52
 			background-size: auto @maze-cell-width;
 			animation: tree-appear 1000ms steps(5);
 			animation-iteration-count: 1;
@@ -526,6 +530,8 @@ body {
 		}
 	}
 
+<<<<<<< HEAD
+=======
 	&.drat-head {
 		&:after {
 			background-image: url('../images/drat-head.gif');
@@ -550,6 +556,7 @@ body {
 
 	
 
+>>>>>>> 1e1b515a57b51e9c92a17fe658fae5641585fa52
 }
 
 #bonus-display {
@@ -910,7 +917,7 @@ body {
 	}
 	
 	.player {
-		width: calc(~"@{maze-cell-width} - @maze-border-width");
+		width: calc(~"@{maze-cell-width} - @maze-border-width - ");
 		height: calc(~"@{maze-cell-height} - @maze-border-width");
 		top: 1px;
 		left: 1px;
@@ -924,11 +931,14 @@ body {
 		height: @maze-border-width * 2;
 	}
 
+<<<<<<< HEAD
+=======
 	#overlay {
 		height: @maze-width;
 		line-height: @maze-width;
 	}
 
+>>>>>>> 1e1b515a57b51e9c92a17fe658fae5641585fa52
 	@keyframes go-west {
 		100% { transform: translate3d(calc(-@player-animation-length-horiz), 0, 0); }
 	}

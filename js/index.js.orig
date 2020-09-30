@@ -768,7 +768,7 @@ function ce(tag, txt) {
  * entrance and exit, but a video-game-like maze (with no dead ends and more
  * than one way to get around).)
  */
-var maze = new function (options) { 
+var maze = new function () { 
 	var 
 		me = this;
 	
@@ -779,7 +779,6 @@ var maze = new function (options) {
 	me.graph = null;
 	me.leftTunnelCell = null;
 	me.rightTunnelCell = null;
-	me.options = options;
 	
 	me.el = gid('maze');
 	
@@ -1057,12 +1056,6 @@ var maze = new function (options) {
 			cellInDir.classList[classListOp](game.oppositeDir(dir));
 		}
 	}
-
-	me.isWall = function (x, y, dir) {
-		var cell = me.getCell(x, y);
-		
-		return !cell.classList.contains(dir);
-	}
 	
 	me.clear = function () {
 		me.el.innerHTML = '';
@@ -1112,26 +1105,6 @@ var maze = new function (options) {
 
 			// This is the check for the fully connected maze.
 			isValid = isFullyConnected() && (document.getElementsByClassName('muncher').length === 0);
-		}
-
-		me.changeRandomWall = () => {
-			const x = game.randInt(2, maze.width - 2);
-			const y = game.randInt(2, maze.height - 2);
-			const dir = me.dirs[game.randInt(0, 3)];
-			const wallOp = me.isWall(x, y, dir) ? 'remove' : 'add';
-			const oldGraph = me.graph;
-			
-			me.setWall(x, y, dir, wallOp);
-			generateGraph();
-
-			if (!isFullyConnected()) {
-				me.setWall(x, y, dir, ( wallOp === 'remove') ? 'add' : 'remove');
-				delete(me.graph);
-				me.graph = oldGraph;
-			} else {
-				delete(oldGraph);
-			}
-			
 		}
 
 		setRequestTimeout(function () {
@@ -1324,7 +1297,10 @@ var Tree = function(x, y, index, classes) {
 		me.el.removeEventListener('animationend', animationendHandler);
 		me.el.parentNode.removeChild(me.el);
 		me.el = null;
+<<<<<<< HEAD
+=======
 		
+>>>>>>> 1e1b515a57b51e9c92a17fe658fae5641585fa52
 		game.forest.deleteTree(me.index);
 	}
 	
@@ -1334,14 +1310,23 @@ var Tree = function(x, y, index, classes) {
 /*******************
  * FOREST
  *******************/
+<<<<<<< HEAD
+function Forest () {
+	var me = this,
+		max = 3,
+=======
 function Forest (max) {
 	var me = this,
-		max = max,
+		max = -1,
+>>>>>>> 1e1b515a57b51e9c92a17fe658fae5641585fa52
 		nextIndex = 0,
 		interval;
 
 	me.trees = {};
+<<<<<<< HEAD
+=======
 	me.max = max;
+>>>>>>> 1e1b515a57b51e9c92a17fe658fae5641585fa52
 
 	function init() {
 		add();
@@ -1349,12 +1334,26 @@ function Forest (max) {
 	}
 
 	function add() {
+<<<<<<< HEAD
+		if (Object.keys(me.trees).length <= max) {
+=======
 		if (Object.keys(me.trees).length < me.max) {
+>>>>>>> 1e1b515a57b51e9c92a17fe658fae5641585fa52
 			addHelper();
 		}
 	}
 
 	function addHelper() {
+<<<<<<< HEAD
+		var cellHasNoTree = false,
+			x, y, cell, cellHasNoTreeisOK;
+
+		while (!cellHasNoTree) {
+			x = game.randInt(1, maze.width - 1);
+			y = game.randInt(1, maze.height - 1);
+			cell = maze.getCell(x, y);
+			cellHasNoTree = (cell.getElementsByClassName('tree').length === 0);
+=======
 		var isCellVacant = false,
 			x, y, cell;
 
@@ -1367,6 +1366,7 @@ function Forest (max) {
 				game.kc.x !== x &&
 				game.kc.y !== y
 			);
+>>>>>>> 1e1b515a57b51e9c92a17fe658fae5641585fa52
 		}
 
 		me.trees['t' + nextIndex] = (new Tree(x, y, nextIndex));
@@ -2198,13 +2198,17 @@ var game = new function () {
 		stateTimeout,
 		bonusDisplayEl = document.getElementById('bonus-display'),
 		munchersEaten = 0,
+<<<<<<< HEAD
+		numActiveDots = 0,
+		level = 0;
+=======
 		muncherBonusPower = 0,
 		numActiveDots = 0,
 		level = 0,
 		// maxDate from https://stackoverflow.com/questions/11526504/minimum-and-maximum-date
 		maxDate = new Date(8640000000000000),
-		mode = location.href.split('?')[1],
-		level = 0;
+		mode = location.href.split('?')[1];
+>>>>>>> 1e1b515a57b51e9c92a17fe658fae5641585fa52
 	
 	me.dots = [];
 	me.munchers = [];
@@ -2304,10 +2308,15 @@ var game = new function () {
 		delete(me.kc);
 		delete(me.den);
 
+<<<<<<< HEAD
+		me.forest.delete();
+		delete(me.forest);
+=======
 		if (me.forest) {
 			me.forest.delete();
 			delete(me.forest);
 		}
+>>>>>>> 1e1b515a57b51e9c92a17fe658fae5641585fa52
 		
 		clearRequestInterval(collisionInterval);
 		
@@ -2441,10 +2450,6 @@ var game = new function () {
 			path,
 			cellKey,
 			aimKey;
-
-		if (!player) {
-			return;
-		}
 			
 		if (numPossibleDirs > 1) {
 			if (aimCoords) {
@@ -2466,22 +2471,15 @@ var game = new function () {
 					var targetDirs = me.getTargetedDirs(player, aimCoords);
 					nextDir = targetDirs[me.randInt(0, targetDirs.length - 1)];
 				}
+				
 			} else {
 				if (nextDir === game.oppositeDir(currentDir)) {
 					nextDirIndex = (nextDirIndex + 1) % numPossibleDirs;
 					nextDir = possibleDirs[nextDirIndex];
 				}
 			}
-		}	else if (numPossibleDirs === 0) {
-			// The Muncher is stuck (probably because a wall formed around it).  We'll 
-			// ask it to wait a second before trying to move again.
-
-			setRequestTimeout(function () {
-				player.dir = me.setPlayerDir(player, cellEl, currentDir, aimCoords);
-			}, 1000);
-			return;
 		}
-
+		
 		dir = nextDir;
 		
 		player.el.classList.add(dir);
@@ -2569,17 +2567,27 @@ var game = new function () {
 							if (playerOnTop.isEdible()) {
 								playerOnTop.die();
 								munchersEaten++;
+<<<<<<< HEAD
+								me.setScore(Math.pow(2, munchersEaten) * 100, true, true);
+=======
 								muncherBonusPower++;
 								me.setScore(Math.pow(2, muncherBonusPower) * 100, true, true);
+>>>>>>> 1e1b515a57b51e9c92a17fe658fae5641585fa52
 							} else if (!playerOnTop.isEaten()){
 								me.kc.die();
 							}
 							break;
 						case types.TREE:
 							if (playerOnTop.isEdible()) {
+<<<<<<< HEAD
+								me.kc.setSpeed('slow');
+								playerOnTop.die(function () {
+									me.kc.setSpeed();
+=======
 								me.kc.setFrozen(true);
 								playerOnTop.die(function () {
 									me.kc.setFrozen(false);
+>>>>>>> 1e1b515a57b51e9c92a17fe658fae5641585fa52
 									me.setScore(100, true, true);
 								});
 							}
@@ -2592,7 +2600,10 @@ var game = new function () {
 								window.Howl && game.sounds['eat-pill'].play();
 								me.setScore(50, true);
 								me.setState('pill-eaten');
+<<<<<<< HEAD
+=======
 								me.sounds['warning'].stop();
+>>>>>>> 1e1b515a57b51e9c92a17fe658fae5641585fa52
 								setMunchersEdibility(true);
 							} else {
 								window.Howl && game.sounds['eat-dot'].play();
@@ -2600,12 +2611,17 @@ var game = new function () {
 							}
 							me.dotSpeed -= 250;
 							if (numActiveDots === 0) {
+<<<<<<< HEAD
+								me.reset(true);
+							}
+=======
 								//next page.
 								me.reset(true, true);
 							}
 
 							me.sounds['heartbeat'].rate(-numActiveDots/6 + 5);
 							
+>>>>>>> 1e1b515a57b51e9c92a17fe658fae5641585fa52
 							break;
 					}
 				}
@@ -2665,7 +2681,7 @@ var game = new function () {
 	
 	me.start = function () {
 		me.lives = 3;
-		me.level = 1;
+		me.level = 0;
 		me.setScore(0)
 		me.reincarnate(true);
 	}
@@ -2715,33 +2731,28 @@ var game = new function () {
 	}
 
 	me.startLevel = function () {
-		const numLevelsProgrammed = 2;
 		maze.el.dataset.hasFinishedRendering = 'true';
 		createDots();
 		createKC();
 		createDen();
 		me.numMunchers = parseInt(document.body.dataset.numMunchers);
 		createMunchers();
-
-		// wall logic
-		if (me.dynamicTimeout !== null) {
-			clearRequestInterval(me.dynamicTimeout);
-			me.dynamicTimeout = null;
-		}
-
-		if (me.level % numLevelsProgrammed === 0) {
-			console.log('xxxxxxxxxx');
-			me.dynamicTimeout = setRequestInterval(
-				maze.changeRandomWall, 500
-			);
-		}
+<<<<<<< HEAD
 
 		// We need to set a conditional on when trees grow.
-		if (me.level > numLevelsProgrammed) {
-			me.forest = new Forest(Math.floor(me.level / numLevelsProgrammed));
-		}
+		me.forest = new Forest();
+		
+		me.setLives();
+=======
+		//createDratapiller();
+
+		// We need to set a conditional on when trees grow.
+		/* if (me.level === 1) {
+			me.forest = new Forest(1);
+		} */
 		
 		me.increaseLives(0);
+>>>>>>> 1e1b515a57b51e9c92a17fe658fae5641585fa52
 		me.dotSpeed = 3000;
 		me.setState('');
 		collisionInterval = setRequestInterval(detectCollisionsInterval, 10);
@@ -2790,9 +2801,7 @@ var game = new function () {
 					doPlaySong: false, 
 					showImmediately: true
 				});
-				me.startLevel({
-					
-				});
+				me.startLevel();
 				break;
 			default:
 				bonusDisplayEl.addEventListener('animationend', bonusDisplayAnimationEnd);
