@@ -20,10 +20,6 @@
 												supported by Chrome and Opera */
 }
 
-
-/*
- * 92vmin is the height of the maze.
- */
 @maze-height: 92vmin;
 @maze-num-columns: 9;
 @maze-num-rows: 7;
@@ -149,6 +145,7 @@ body {
 	&[data-has-finished-rendering] td {
 		transform: none;
 		opacity: initial;
+		//will-change: none; 
 	}
 
 	th {
@@ -194,6 +191,7 @@ body {
 		
 		transform: perspective(3000px) translateZ(0px);
 		opacity: 1;
+		//will-change: transform, opacity;
 	
 		&[data-initial-state] {
 			transform: perspective(3000px) translateZ(-3000px);
@@ -292,8 +290,6 @@ body {
 	// These are overriden via JS for the munchers and dots as the game
 	// needs them to be.
 	animation-duration: 500ms;
-
-
 
 	&.paused {
 		animation-play-state: paused;
@@ -418,6 +414,10 @@ body {
 		&.dead:after {
 			visibility: hidden;
 		}
+	}
+
+	&.kc,
+	&.drat-head {
 
 		&.e.reverse:after {
 			transform: translateZ(0);
@@ -507,6 +507,48 @@ body {
 			}
 		}
 	}
+
+	&.tree {
+		z-index: 29; 
+
+		&:after {
+			background-image: url('../images/tree.gif');
+			background-size: auto @maze-cell-width;
+			animation: tree-appear 1000ms steps(5);
+			animation-iteration-count: 1;
+			animation-fill-mode: forwards;
+		}
+
+		&.removing {
+			&:after {
+				animation-name: tree-disappear;
+			}
+		}
+	}
+
+	&.drat-head {
+		&:after {
+			background-image: url('../images/drat-head.gif');
+		}
+
+		&.sad:after {
+			background-image: url('../images/drat-head-sad.gif');
+		}
+
+		&.eating:after {
+			background-image: url('../images/drat-head-eating.gif');
+			background-size: auto @maze-cell-width;
+			animation: kc-move 500ms steps(2) infinite;
+		}
+	}
+
+	&.drat-segment {
+		&:after {
+			background-image: url('../images/drat-segment.gif');
+		}
+	}
+
+	
 
 }
 
@@ -675,6 +717,18 @@ body {
 	100% { background-position-x: -1 * @maze-cell-width * 2 }
 }
 
+@keyframes tree-appear {
+	100% { background-position-x: -1 * @maze-cell-width * 5 }
+}
+
+@keyframes tree-disappear {
+	0% {
+		background-position-x: -1 * @maze-cell-width * 5;
+	}
+
+	100% { background-position-x: 0}
+}
+
 @keyframes muncher-flash {
 	0%, 50%, 100% {
 		 opacity: 1;
@@ -803,16 +857,32 @@ body {
 
 @keyframes rotate-pallette {
 	0% {
-		filter: hue-rotate(0deg);
+		// filter: hue-rotate(0deg);
 	}
 	
 	100% {
-		filter: hue-rotate(360deg);
+		// filter: hue-rotate(360deg);
 	}
 }
 
 @media screen and (max-aspect-ratio: 31 / 26) {
+	@maze-width: 100vw;
+
+	@maze-num-columns: 9;
+	@maze-num-rows: 7;
+	@maze-height: @maze-width * (@maze-num-rows / @maze-num-columns);
+	@maze-cell-height: @maze-height / @maze-num-rows;
+	@maze-cell-width:  @maze-width / @maze-num-columns;
+	@player-animation-length-horiz: @maze-cell-width + 2 * @maze-border-width;
+	@player-animation-length-vert: @maze-cell-height + 2 * @maze-border-width;
+	@tunnel-length: @player-animation-length * 8;
+	@super-drop-shadow-length: 30vw;
+	@maze-border-width: 0.5vw;
 	
+	html, body {
+		height: calc(~"100vh - 73px");
+	}
+
 	.stats {
 		width: 100vw;
 		top: 0.8vw;
@@ -830,36 +900,49 @@ body {
 	}
 	
 	#maze {
-		width: 100vw;
-		height: 77vw;
+		width: @maze-width;
+		height: @maze-height;
 		top: 5vw;
 		bottom: auto;
 		left: 0;
-		right: autp;
+		right: auto;
 		margin-left: 0;
 	}
 	
 	.player {
-		width: calc(92vw / 9 );
-		height: calc(92vw / 9 );
-		top: 1.5vw;
-		left: 0vw;
+		width: calc(~"@{maze-cell-width} - @maze-border-width - ");
+		height: calc(~"@{maze-cell-height} - @maze-border-width");
+		top: 1px;
+		left: 1px;
 	}
 	
+	&.n.e::before,
+	&.n.w::before,
+	&.s.e::after,
+	&.s.w::after {
+		width: @maze-border-width * 2;
+		height: @maze-border-width * 2;
+	}
+
+	#overlay {
+		height: @maze-width;
+		line-height: @maze-width;
+	}
+
 	@keyframes go-west {
-		100% { transform: translate3d(calc(-110vw / 9), 0, 0); }
+		100% { transform: translate3d(calc(-@player-animation-length-horiz), 0, 0); }
 	}
 	
 	@keyframes go-east {
-		100% { transform: translate3d(calc(110vw / 9 ), 0, 0); }
+		100% { transform: translate3d(calc(@player-animation-length-horiz), 0, 0); }
 	}
 	
 	@keyframes go-north {
-		100% { 	transform: translate3d(0, calc(-110vw / 9 ), 0); }
+		100% { 	transform: translate3d(0, calc(-@player-animation-length-vert), 0); }
 	}
 	
 	@keyframes go-south {
-		100% { 	transform: translate3d(0, calc(110vw / 9 ), 0); }
+		100% { 	transform: translate3d(0, calc(@player-animation-length-vert), 0); }
 	}
 	
 
