@@ -956,6 +956,30 @@ var maze = new function (options) {
 		}
 		*/
 	}
+
+	function removeMaze(w, h) {
+		for (let i = 1; i <= w; i++) {
+			for (let j = 1; j <= h; j++) {
+				console.log('x,y', i, j);
+
+				if (j !== 1) {
+					me.setWall(i, j, 'n', 'remove');
+				}
+
+				if (j !== h ) {
+					me.setWall(i, j, 's', 'remove');
+				}
+
+				if (i !== 1) {
+					me.setWall(i, j, 'w', 'remove');
+				}
+
+				if (i !== w) {
+					me.setWall(i, j, 'e', 'remove');
+				}
+			}
+		}
+	}
 	
 	function makePathAroundDen() {
 		var i;
@@ -1067,9 +1091,31 @@ var maze = new function (options) {
 	me.clear = function () {
 		me.el.innerHTML = '';
 	}
+
+
+	me.changeRandomWall = () => {
+		const x = game.randInt(2, maze.width - 2);
+		const y = game.randInt(2, maze.height - 2);
+		const dir = me.dirs[game.randInt(0, 3)];
+		const wallOp = me.isWall(x, y, dir) ? 'remove' : 'add';
+		const oldGraph = me.graph;
+		
+		me.setWall(x, y, dir, wallOp);
+		generateGraph();
+
+		if (!isFullyConnected()) {
+			me.setWall(x, y, dir, ( wallOp === 'remove') ? 'add' : 'remove');
+			delete(me.graph);
+			me.graph = oldGraph;
+		} else {
+			delete(oldGraph);
+		}
+		
+	}
+
 	 
 	me.make = function (w, h, denX, denY, options = {}) {
-		const { doPlaySong, showImmediately, callbackWhenRendered} = options;
+		const { doPlaySong, showImmediately, callbackWhenRendered, noWalls} = options;
 		var isValid = false;
 		me.width = w;
 		me.height = h;
@@ -1103,6 +1149,10 @@ var maze = new function (options) {
 			//Now, we must close up the maze
 			close_maze();
 			
+			if (noWalls) {
+				removeMaze(w, h);
+			}
+			
 			makePathAroundDen();
 			makeTunnel();
 			removeDeadEnds();
@@ -1112,26 +1162,6 @@ var maze = new function (options) {
 
 			// This is the check for the fully connected maze.
 			isValid = isFullyConnected() && (document.getElementsByClassName('muncher').length === 0);
-		}
-
-		me.changeRandomWall = () => {
-			const x = game.randInt(2, maze.width - 2);
-			const y = game.randInt(2, maze.height - 2);
-			const dir = me.dirs[game.randInt(0, 3)];
-			const wallOp = me.isWall(x, y, dir) ? 'remove' : 'add';
-			const oldGraph = me.graph;
-			
-			me.setWall(x, y, dir, wallOp);
-			generateGraph();
-
-			if (!isFullyConnected()) {
-				me.setWall(x, y, dir, ( wallOp === 'remove') ? 'add' : 'remove');
-				delete(me.graph);
-				me.graph = oldGraph;
-			} else {
-				delete(oldGraph);
-			}
-			
 		}
 
 		setRequestTimeout(function () {
@@ -1769,10 +1799,10 @@ var KC = function(x, y) {
 		classList.remove('paused');
 	}
 	
-	/* function initGestures() {
+	function initGestures() {
 		var activeRegion = ZingTouch.Region(document.body);
 		activeRegion.bind(maze.el, 'swipe', swipeEvent)
-	} */
+	}
 
 	me.setFrozen = function(className) {
 		requestAnimationFrame(function () {
@@ -2676,9 +2706,8 @@ var game = new function () {
 		showIntro(initLevel, doPlaySong);
 	}
 	
-	function showIntro(callback, doPlaySong) {
+	function showIntro(callback, doPlaySong, noWalls) {
 		overlayEl.className = '';
-		// play theme song
 
 		demo.showLetterByLetter(overlayEl, 'Ready Player 1', 0, 120, function () {
 			setRequestTimeout(function () {
@@ -2687,7 +2716,9 @@ var game = new function () {
 			}, doPlaySong ? 3750 : 1000);
 		});
 
-		callback(doPlaySong);
+
+		// play theme song
+		callback(doPlaySong, noWalls);
 	}
 	
 	me.showGameOver = function () {
@@ -2708,14 +2739,24 @@ var game = new function () {
 		});
 	}
 	
-	function initLevel(doPlaySong) {
+	function initLevel(doPlaySong, noWalls) {
+		console.log('level', me.level);
+
+		// wall logic
+		if (me.dynamicTimeout !== null) {
+			clearRequestInterval(me.dynamicTimeout);
+			me.dynamicTimeout = null;
+		}
+		
 		maze.make(9, 7, 5, 5, {
-			doPlaySong
+			doPlaySong,
+			noWalls: (me.level === 3)
 		});
 	}
 
 	me.startLevel = function () {
-		const numLevelsProgrammed = 2;
+		
+		const numLevelsProgrammed = 3;
 		maze.el.dataset.hasFinishedRendering = 'true';
 		createDots();
 		createKC();
@@ -2723,18 +2764,22 @@ var game = new function () {
 		me.numMunchers = parseInt(document.body.dataset.numMunchers);
 		createMunchers();
 
-		// wall logic
-		if (me.dynamicTimeout !== null) {
-			clearRequestInterval(me.dynamicTimeout);
-			me.dynamicTimeout = null;
-		}
 
-		if (me.level % numLevelsProgrammed === 0) {
-			console.log('xxxxxxxxxx');
-			me.dynamicTimeout = setRequestInterval(
-				maze.changeRandomWall, 500
-			);
+		const levelCheck = me.level % (numLevelsProgrammed + 1);
+
+		switch ( levelCheck ) {
+			case 2: 
+	
+				console.log('xxxxxxxxxx');
+				me.dynamicTimeout = setRequestInterval(
+					maze.changeRandomWall, 500
+				);
+				break;
+			case 3:
+			default:
 		}
+		console.log('level ', levelCheck);
+		
 
 		// We need to set a conditional on when trees grow.
 		if (me.level > numLevelsProgrammed) {
@@ -2769,11 +2814,12 @@ var game = new function () {
 	}
 
 	function mazeTestMode() {
+		me.level = 3;
 		maze.make(9, 7, 5, 5, {
 			doPlaySong: false, 
 			showImmediately: true
 		});
-		//maze.el.dataset.hasFinishedRendering = 'true';
+		maze.el.dataset.hasFinishedRendering = 'true';
 	}
 	
 	me.initHelper = function () {
@@ -2786,9 +2832,11 @@ var game = new function () {
 				break;
 			case "kc-test":
 				document.body.dataset.numMunchers="0"
+				me.level = 3;
 				maze.make(9, 7, 5, 5, {
 					doPlaySong: false, 
-					showImmediately: true
+					showImmediately: true,
+					noWalls: (me.level === 3)
 				});
 				me.startLevel({
 					
