@@ -71,6 +71,88 @@ window.clearRequestTimeout = function(handle) {
 	}
 };
 
+var Speech = new function () {
+	var me = this,
+		gainNode;
+
+	function PlayWebkit(context, audiobuffer)
+	{
+		var source = context.createBufferSource();
+		var soundBuffer = context.createBuffer(1, audiobuffer.length, 22050);
+		var buffer = soundBuffer.getChannelData(0);
+		for(var i=0; i<audiobuffer.length; i++) buffer[i] = audiobuffer[i];
+		source.buffer = soundBuffer;
+		source.connect(context.destination);
+		source.start(0);    
+	}
+
+	function PlayMozilla(context, audiobuffer)
+	{
+		var written = context.mozWriteAudio(audiobuffer);
+		var diff = audiobuffer.length - written;
+		if (diff <= 0) return;
+		var buffer = new Float32Array(diff);
+		for(var i = 0; i<diff; i++) buffer[i] = audiobuffer[i+written];
+		window.setTimeout(function(){PlayMozilla(context, buffer)}, 500);
+	}
+
+	// from https://stackoverflow.com/questions/43386277/how-to-control-the-sound-volume-of-audio-buffer-audiocontext
+	function setVolume(aCtx, value) {
+		gainNode = aCtx.createGain();
+		gainNode.gain.value = value; // setting it to 10%
+		
+		gainNode.connect(aCtx.destination);
+
+	}
+
+
+	function PlayBuffer(audiobuffer)
+	{
+		var context,
+			volume = 0.5;
+
+		if (typeof AudioContext !== "undefined") 
+		{
+			context = new AudioContext();
+			setVolume(context, volume);
+			PlayWebkit(context, audiobuffer);
+		} else 
+		if (typeof webkitAudioContext !== "undefined") 
+		{
+			context = new webkitAudioContext();
+			setVolume(context, volume);
+			PlayWebkit(context, audiobuffer);
+		} else if (typeof Audio !== "undefined")
+		{
+			context = new Audio();
+			context.mozSetup(1, 22050);
+			setVolume(context, volume);
+			PlayMozilla(context, audiobuffer);
+		}
+	}
+
+	me.speak = function (text)
+	{
+		return;
+
+		var input = text;
+		while (input.length < 256) input += " ";
+		var ptr = allocate(intArrayFromString(input), 'i8', ALLOC_STACK);
+		_TextToPhonemes(ptr);
+		//alert(Pointer_stringify(ptr));
+		_SetInput(ptr);
+		_Code39771();
+
+		var bufferlength = Math.floor(_GetBufferLength()/50);
+		var bufferptr = _GetBuffer();
+
+		audiobuffer = new Float32Array(bufferlength);
+
+		for(var i=0; i<bufferlength; i++)
+			audiobuffer[i] = ((getValue(bufferptr+i, 'i8')&0xFF)-128)/256;
+		PlayBuffer(audiobuffer);
+	}
+}
 
 
 
@@ -112,6 +194,16 @@ function Graph(){
   this.addVertex = function(name, edges){
     this.vertices[name] = edges;
   };
+
+  this.getWeight = function () {
+	var weight = 0;
+
+	for (var i in this.vertices) {
+		//console.log(i, this.vertices[i])
+		weight += Object.keys(this.vertices[i]).length;
+	}
+	return weight;
+  }
 
   this.shortestPath = function (start, finish) {
     var nodes = new PriorityQueue(),
@@ -446,51 +538,6 @@ Vector2.prototype = {
 	isMagGreaterThan : function (distance) {
 		return(this.magnitudeSquared()>distance*distance);
 	}
-	
-	
-	// still AS3 to convert : 
-	// public function projectOnto(v:Vector2) : Vector2
-	// {
-	// 		var dp:Number = dot(v);
-	// 
-	// 		var f:Number = dp / ( v.x*v.x + v.y*v.y );
-	// 
-	// 		return new Vector2( f*v.x , f*v.y);
-	// 	}
-	// 
-	// 
-	// public function convertToNormal():void
-	// {
-	// 	var tempx:Number = x; 
-	// 	x = -y; 
-	// 	y = tempx; 
-	// 	
-	// 	
-	// }		
-	// public function getNormal():Vector2
-	// {
-	// 	
-	// 	return new Vector2(-y,x); 
-	// 	
-	// }
-	// 
-	// 
-	// 
-	// public function getClosestPointOnLine ( vectorposition : Point, targetpoint : Point ) : Point
-	// {
-	// 	var m1 : Number = y / x ;
-	// 	var m2 : Number = x / -y ;
-	// 	
-	// 	var b1 : Number = vectorposition.y - ( m1 * vectorposition.x ) ;
-	// 	var b2 : Number = targetpoint.y - ( m2 * targetpoint.x ) ;
-	// 	
-	// 	var cx : Number = ( b2 - b1 ) / ( m1 - m2 ) ;
-	// 	var cy : Number = m1 * cx + b1 ;
-	// 	
-	// 	return new Point ( cx, cy ) ;
-	// }
-	// 
-
 };
 
 Vector2Const = {
@@ -506,8 +553,8 @@ Vector2Const = {
 var mobileController = new function () {
 		
 	var me=this,
-		bodyEl,
-		canvas,
+		bodyEl = document.body,
+		canvas = document.getElementById('mobile-controller'),
 		c, // c is the canvas' context 2D
 		container,
 		halfWidth,
@@ -515,7 +562,8 @@ var mobileController = new function () {
 		leftPointerID = -1,
 		leftPointerPos = new Vector2(0, 0),
 		leftPointerStartPos = new Vector2(0, 0),
-		leftVector = new Vector2(0, 0);
+		leftVector = new Vector2(0, 0)
+		isInitialized = false;
 
 	var pointers; // collections of pointers
 	
@@ -524,7 +572,7 @@ var mobileController = new function () {
 	window.onresize = resetCanvas;
 
 	me.init = function () {
-			bodyEl = document.body;
+		if (!isInitialized) {
 			setupCanvas();
 			pointers = new Collection();
 			canvas.addEventListener('pointerdown', onPointerDown, false);
@@ -533,6 +581,12 @@ var mobileController = new function () {
 			canvas.addEventListener('pointerout', onPointerUp, false);
 			bodyEl.addEventListener('touchstart', function(e){ e.preventDefault(); });
 			requestAnimationFrame(draw);
+			isInitialized = true;
+		}
+	}
+
+	me.remove = function () {
+		canvas.classList.add('disabled');
 	}
 
 	function resetCanvas(e) {
@@ -652,7 +706,8 @@ var mobileController = new function () {
 	}
 
 	function setupCanvas() {
-			canvas = document.getElementById('mobile-controller');
+			canvas.classList.remove('disabled');
+			
 			c = canvas.getContext('2d');
 			resetCanvas();
 			c.strokeStyle = "#ffffff";
@@ -660,7 +715,13 @@ var mobileController = new function () {
 	}	
 }
 
+types = {
+	KC: -1,
+	DOT: 0,
+	TREE: 1,
+	MUNCHER: 2
 
+},
 
 
 Node.prototype.add = function(tag, cnt, txt, datasetItem) {
@@ -975,13 +1036,13 @@ var maze = new function () {
 		
 		// make west tunnel
 		me.setWall(1, y, 'w', 'remove');
-		me.setWall(1, y, 'n', 'add');
-		me.setWall(1, y, 's', 'add');
+		me.setWall(1, y, 'n', 'remove');
+		me.setWall(1, y, 's', 'remove');
 
 		// make east tunnel
 		me.setWall(me.width, y, 'e', 'remove');
-		me.setWall(me.width, y, 'n', 'add');
-		me.setWall(me.width, y, 's', 'add');
+		me.setWall(me.width, y, 'n', 'remove');
+		me.setWall(me.width, y, 's', 'remove');
 	}
 	
 	me.setWall = function (x, y, dir, operation) {
@@ -1000,62 +1061,87 @@ var maze = new function () {
 		me.el.innerHTML = '';
 	}
 	 
-	me.make = function (w, h, denX, denY) {
+	me.make = function (w, h, denX, denY, options = {}) {
+		const { doPlaySong, showImmediately, callbackWhenRendered} = options;
+		var isValid = false;
 		me.width = w;
 		me.height = h;
 		me.denX = denX;
 		me.denY = denY;
-		me.clear();
-		me.el.add('tr', h);
-		me.el.childNodes.map(function(x) {
-				x.add('th', 1);
-				x.add('td', w, '*', 'initialState');
-				x.add('th', 1);
-		});
-		me.el.ins('tr');
-		me.el.add('tr', 1);
-		me.el.firstChild.add('th', w + 2);
-		me.el.lastChild.add('th', w + 2);
-		for (var i = 1; i <= h; i++) {
-			for (var j = 1; j <= w; j++) {
-				me.el.kid(i).kid(j).neighbors = [
-					me.el.kid(i + 1).kid(j),
-					me.el.kid(i).kid(j + 1),
-					me.el.kid(i).kid(j - 1),
-					me.el.kid(i - 1).kid(j)
-				];
+
+		while (!isValid) {
+			me.clear();
+			me.el.add('tr', h);
+			me.el.childNodes.map(function(x) {
+					x.add('th', 1);
+					x.add('td', w, '*', 'initialState');
+					x.add('th', 1);
+			});
+			me.el.ins('tr');
+			me.el.add('tr', 1);
+			me.el.firstChild.add('th', w + 2);
+			me.el.lastChild.add('th', w + 2);
+			for (var i = 1; i <= h; i++) {
+				for (var j = 1; j <= w; j++) {
+					me.el.kid(i).kid(j).neighbors = [
+						me.el.kid(i + 1).kid(j),
+						me.el.kid(i).kid(j + 1),
+						me.el.kid(i).kid(j - 1),
+						me.el.kid(i - 1).kid(j)
+					];
+				}
 			}
+			walk(me.el.kid(irand(h) + 1).kid(irand(w) + 1));
+			
+			//Now, we must close up the maze
+			close_maze();
+			
+			makePathAroundDen();
+			makeTunnel();
+			removeDeadEnds();
+			removeThreeInARow();
+			
+			generateGraph();
+
+			// This is the check for the fully connected maze.
+			isValid = isFullyConnected() && (document.getElementsByClassName('muncher').length === 0);
 		}
-		walk(me.el.kid(irand(h) + 1).kid(irand(w) + 1));
-		
-		//Now, we must close up the maze
-		close_maze();
-		
-		makePathAroundDen();
-		makeTunnel();
-		removeDeadEnds();
-		removeThreeInARow();
-		generateGraph();
-		setRequestTimeout(makeVisible, 200);
+
+		setRequestTimeout(function () {
+			makeVisible(doPlaySong, showImmediately);
+		}, 200);
 	};
 
-	function makeVisible() {
+	function makeVisible(doPlaySong, showImmediately) {
 		var cells = toArray(me.el.getElementsByTagName('td')),
-			delay = 50,
+			delay = doPlaySong ? 95 : 50,
 			duration = parseFloat(document.defaultView.getComputedStyle(cells[0], null).transitionDuration.split(',')[0]) * 1000;
 
 		cells = game.shuffleArray(cells);
 		for (var i=0; i<cells.length; i++) {
 			var cell = cells[i];
-			cell.style.transitionDelay = `${delay * i}ms, ${delay * i}ms`;
+			if (showImmediately) {
+				cell.style.transitionDelay = '0ms, 0ms';
+			} else {
+				cell.style.transitionDelay = `${delay * i}ms, ${delay * i}ms`;
+			}
+			
 			delete cell.dataset.initialState;
 		}
 
-		setRequestTimeout(function () {
-			
-			game.startLevel();
-		}, delay * i + duration);
+		if (doPlaySong) {
+			game.sounds['cuckoo'].play();
+		}
 
+		if (!showImmediately) {
+			setRequestTimeout(function () {
+				game.startLevel();
+			}, delay * (i + 1) + duration);
+		} else {
+			console.log('weight of graph is ', me.graph.getWeight())
+		}
+
+		//console.log('game delay', delay, i, duration, delay * i + duration);
 	}
 	
 	function generateGraph() {
@@ -1091,6 +1177,22 @@ var maze = new function () {
 			}
 		}
 		
+	}
+
+	function isFullyConnected() {
+		var sp, i, j;
+		for (i = 1; i <= me.width; i++ ) {
+			for ( j = 1; j <= me.height; j++ ) {
+				if (i != 1 && j != 1) {
+					sp = me.graph.shortestPath('11', `${i}${j}`);
+					//console.log(`shortest path to ${i}${j} is`, sp);
+					if (sp.length === 0) {
+						return false;
+					}
+				}
+			}
+		}
+		return true;
 	}
 	
 	function close_maze() {
@@ -1146,6 +1248,122 @@ var maze = new function () {
 };
 
 /*******************
+* TREE
+*******************/
+
+var Tree = function(x, y, index, classes) {
+	var
+		me = this,
+		cellEl = maze.getCell(x, y),
+		removeCallback;
+		
+	me.x = x;
+	me.y = y;
+	me.el = null;
+	me.index = index;
+	me.type = types.TREE;
+	
+	function init() {
+		me.el = ce('div');
+		me.el.__player = me;
+		me.el.className = `tree ${(classes || '')} player`;
+		maze.putInCell(me.el, x, y);
+		me.el.addEventListener('animationend', animationendHandler)
+	}
+
+	me.isEdible = function () {
+		return  !(me.el.classList.contains('removing'));
+	}
+	
+	me.stop = function () {
+		me.el.classList.add('stop');
+	}
+
+	me.die = function (callback) {
+		removeCallback = callback;
+		me.el.classList.add('removing')
+	}
+
+	function animationendHandler(e) {
+		if (e.animationName === 'tree-disappear') {
+			me.remove();
+			if (removeCallback) {
+				removeCallback();
+			}
+		}
+	}
+
+	me.remove = function () {
+		me.el.removeEventListener('animationend', animationendHandler);
+		me.el.parentNode.removeChild(me.el);
+		me.el = null;
+		
+		game.forest.deleteTree(me.index);
+	}
+	
+	init();
+}
+
+/*******************
+ * FOREST
+ *******************/
+function Forest (max) {
+	var me = this,
+		max = -1,
+		nextIndex = 0,
+		interval;
+
+	me.trees = {};
+	me.max = max;
+
+	function init() {
+		add();
+		interval = setRequestInterval(add, 5000);
+	}
+
+	function add() {
+		if (Object.keys(me.trees).length < me.max) {
+			addHelper();
+		}
+	}
+
+	function addHelper() {
+		var isCellVacant = false,
+			x, y, cell;
+
+		while (!isCellVacant) {
+			x = game.randInt(1, maze.width - 1);
+			y = game.randInt(1, maze.height - 1);
+			cell = maze.getCell(x, y);
+			isCellVacant = (
+				cell.getElementsByClassName('tree').length === 0 &&
+				game.kc.x !== x &&
+				game.kc.y !== y
+			);
+		}
+
+		me.trees['t' + nextIndex] = (new Tree(x, y, nextIndex));
+		nextIndex++;
+	}
+
+	me.deleteTree = function(index) {
+		var treeIndex = 't' + index,
+			tree = me.trees[treeIndex];
+
+		delete(me.trees[treeIndex]);
+			
+	}
+
+	me.delete = function () {
+		if (interval) {
+			clearRequestTimeout(interval);
+		}
+	}
+
+	init();
+}
+
+/*******************
  * DOT
  *******************/
 var Dot = function(x, y, index, classes) {
@@ -1156,8 +1374,8 @@ var Dot = function(x, y, index, classes) {
 	me.x = x;
 	me.y = y;
 	me.el = null;
-	me.isDot = true;
-	me.index = index;;
+	me.index = index;
+	me.type = types.DOT;
 	
 	function animationendHandler(e) {
 		var cellInfo = maze.getCellInDir(me.x, me.y, me.dir);
@@ -1293,10 +1511,11 @@ var KC = function(x, y) {
 			var currentCell = maze.getCell(me.x, me.y),
 				isInTunnel = !!currentCell.dataset.tunnel;
 
-			// If we are moving (and we are not in the tunnel), 
+			// If we are moving (and we are not in the tunnel and
+			// not eating a tree), 
 			// then we check if we reversed.  If so, reverse right
 			// away.
-			if (isMoving && !isInTunnel) {
+			if (isMoving && !isInTunnel && !me.isFrozen) {
 				if (cmdBeforeLast === game.oppositeDir(lastCmd)) {
 					requestAnimationFrame(function () {
 						go(true);
@@ -1384,6 +1603,7 @@ var KC = function(x, y) {
 		//requestAnimationFrame(function() {
 			elStyle.setProperty('display', 'none');
 			elStyle.setProperty('animation-name', 'fake-animation-name', 'important');
+			
 			requestAnimationFrame(function() {
 				elStyle.setProperty('animation-delay', delayTime, 'important');
 				elStyle.removeProperty('animation-name');
@@ -1398,7 +1618,6 @@ var KC = function(x, y) {
 		var classList = me.el.classList,
 			now;
 		
-		// ZOLTAN
 		if (doReverse) {
 			// We need to figure out what percentage of the animation we were in
 			now = new Date().getTime();
@@ -1450,6 +1669,10 @@ var KC = function(x, y) {
 	}
 	
 	me.die = function () {
+		// ensure we timeout the muncher edibility timer.
+		game.clearStateTimeout();
+
+		// keyboard events removal.
 		document.body.removeEventListener('keydown', move);
 		document.body.removeEventListener('keyup', stop);
 		var currentTransform = document.defaultView.getComputedStyle(me.el, null).transform;
@@ -1460,6 +1683,7 @@ var KC = function(x, y) {
 		stopSound();
 		isSoundPlaying=false;
 		game.sounds['kc-die1'].play();
+		game.sounds['heartbeat'].stop();
 		game.stopPlayers();
 		
 		delete maze.el.dataset.hasFinishedRendering;
@@ -1480,15 +1704,17 @@ var KC = function(x, y) {
 		game.clearStateTimeout();
 		me.el.classList.remove('die');
 		me.el.classList.add('dead');
+
+		game.sounds['heartbeat'].stop();
 		
-		game.lives --;
-		game.setLives();
+		
+		game.increaseLives(-1);
 		if (game.lives === 0) {
 			game.showGameOver();
 		} else {
 			requestAnimationFrame(
 				function() {
-					game.reset(true)
+					game.reset(true, false)
 				}
 			);
 		}
@@ -1516,9 +1742,23 @@ var KC = function(x, y) {
 		classList.remove('paused');
 	}
 	
-	function initGestures() {
+	/* function initGestures() {
 		var activeRegion = ZingTouch.Region(document.body);
 		activeRegion.bind(maze.el, 'swipe', swipeEvent)
+	} */
+
+	me.setFrozen = function(className) {
+		requestAnimationFrame(function () {
+			
+			if (className) {
+				me.el.classList.add('paused');
+				me.isFrozen = true;
+			} else {
+				me.el.classList.remove('paused');
+				me.isFrozen = false;
+			}
+
+		})
 	}
 	
 	function init() {
@@ -1599,7 +1839,7 @@ var Muncher = function (x, y, dir, speed, index) {
 	me.speed = speed;
 	me.state = modes.SCATTER;
 	me.index = index;
-	me.isEnemy = true;
+	me.type = types.MUNCHER;
 	
 	/* Muncher animation end handler */
 	function animationendHandler(e) {
@@ -1735,13 +1975,21 @@ var demo = new function () {
 	
 	me.start = function () {
 		document.body.addEventListener('keydown', keyDownClickEvent);
-		document.body.addEventListener('click', keyDownClickEvent);
+		// document.body.addEventListener('click', keyDownClickEvent);
 		document.body.addEventListener('touchstart', keyDownClickEvent);
 		bodyEl.className = 'demo-mode';
 		slide1();
 	}
 	
 	function keyDownClickEvent(e) {
+		if (e.key === undefined) {
+			// This is a keyboard enabled machine, so we are removing the 
+			// touche enabled overlay.
+			mobileController.init();
+		} else {
+			mobileController.remove();
+		}
+
 		if (e.key === ' ' || e.type === 'click') {
 			document.body.removeEventListener('keydown', keyDownClickEvent);
 			document.body.removeEventListener('click', keyDownClickEvent);
@@ -1758,7 +2006,7 @@ var demo = new function () {
 			<div id="slide1-1" class="slide" demo-text"></div>
 			<div id="slide-1" class="slide pixelate logo-container">
 				<div id="slide1-2" class="kc-munchkin-logo white-gradient">
-					K.C. Munchkin<span class="sup">²</span>
+					K.C. Munchkin<span class="sup">Â²</span>
 				</div>
 			</div>
 			<div id="slide1-3" class="slide">Press space to start</div>
@@ -1911,15 +2159,21 @@ var game = new function () {
 		stateTimeout,
 		bonusDisplayEl = document.getElementById('bonus-display'),
 		munchersEaten = 0,
-		numActiveDots = 0;
+		muncherBonusPower = 0,
+		numActiveDots = 0,
+		level = 0,
+		// maxDate from https://stackoverflow.com/questions/11526504/minimum-and-maximum-date
+		maxDate = new Date(8640000000000000),
+		mode = location.href.split('?')[1];
 	
-	me.dots = [],
-	me.munchers = [],
-	me.numMunchers = 0,
-	me.kc,
-	me.den,
-	me.dotSpeed;
-	me.canEatMunchers = false,
+	me.dots = [];
+	me.munchers = [];
+	me.numMunchers = 0;
+	me.kc = null;
+	me.forest = null;
+	me.den = null;
+	me.dotSpeed = null;
+	me.canEatMunchers = false;
 	me.sounds = {};
 	me.lives = 3;
 	
@@ -1971,7 +2225,8 @@ var game = new function () {
 		}
 	}
 	
-	me.setLives = function() {
+	me.increaseLives = function(increment) {
+		me.lives += increment;
 		livesEl.innerHTML = '';
 		var i;
 		for (i=1; i<=me.lives; i++) {
@@ -1980,12 +2235,9 @@ var game = new function () {
 	}
 	
 	function setHighScore(s) {
-		var exp = new Date();
-		exp.setDate(exp.getDate() + 20 * 365); // 20 years from now.
-
 		highScore = s;
 		highScoreEl.innerHTML = s;
-		Cookie.set('kc-hi', s, exp);
+		Cookie.set('kc-hi', s, maxDate); 
 	}
 
 	function getHighScore() {
@@ -2011,19 +2263,30 @@ var game = new function () {
 		delete(me.munchers);
 		delete(me.kc);
 		delete(me.den);
+
+		if (me.forest) {
+			me.forest.delete();
+			delete(me.forest);
+		}
 		
 		clearRequestInterval(collisionInterval);
+		
 		me.dots = [];
 		me.munchers = new Array(3);
 		
 		me.den = null;
 		
 		window.Howl && game.sounds['kc-move'].pause();
+		game.sounds['heartbeat'].stop();
 	}
 	
-	me.reset = function (keepScore) {
+	me.reset = function (keepScore, nextLevel) {
 		delete maze.el.dataset.hasFinishedRendering;
 		me.teardown(keepScore);
+
+		if (nextLevel) {
+			me.level ++;
+		}
 		me.reincarnate();
 	};
 	
@@ -2070,6 +2333,12 @@ var game = new function () {
 			me.munchers[i] = new Muncher(5 , 5, 'n', 450 + 50 * i, i);
 		}
 		
+	}
+
+	function startTreeTimeout() {
+		me.trees.push(new Tree(game.randInt(1, maze.width - 1), game.randInt(1, maze.height - 1)));
+
+		setRequestTimeout(startTreeTimeout, 5000);
 	}
 	
 	me.stopPlayers = function () {
@@ -2201,6 +2470,7 @@ var game = new function () {
 		game.canEatMunchers = val;
 		
 		munchersEaten = 0;
+		muncherBonusPower = 0;
 
 		for (i=0; i<me.munchers.length; i++) {
 			muncher = me.munchers[i];
@@ -2239,35 +2509,53 @@ var game = new function () {
 				i;
 			
 			/*
-			 * Only if playerOnTop is a muncher.
+			 * Only if playerOnTop is not KC
 			 */
 			if (playerOnTop) {
 				if (playerOnTop !== me.kc) {
-					if (playerOnTop.isEnemy) {
-						if (playerOnTop.isEdible()) {
-							playerOnTop.die();
-							munchersEaten++;
-							me.setScore(Math.pow(2, munchersEaten) * 100, true, true);
-						} else if (!playerOnTop.isEaten()){
-							me.kc.die();
-						}
-					} else if (playerOnTop.isDot) {
-						playerOnTop.stop();
-						numActiveDots --;
-						
-						if (playerOnTop.el.classList.contains('pill')) {
-							window.Howl && game.sounds['eat-pill'].play();
-							me.setScore(50, true);
-							me.setState('pill-eaten');
-							setMunchersEdibility(true);
-						} else {
-							window.Howl && game.sounds['eat-dot'].play();
-							me.setScore(10, true);
-						}
-						me.dotSpeed -= 250;
-						if (numActiveDots === 0) {
-							me.reset(true);
-						}
+					switch(playerOnTop.type) {
+						case types.MUNCHER:
+							if (playerOnTop.isEdible()) {
+								playerOnTop.die();
+								munchersEaten++;
+								muncherBonusPower++;
+								me.setScore(Math.pow(2, muncherBonusPower) * 100, true, true);
+							} else if (!playerOnTop.isEaten()){
+								me.kc.die();
+							}
+							break;
+						case types.TREE:
+							if (playerOnTop.isEdible()) {
+								me.kc.setFrozen(true);
+								playerOnTop.die(function () {
+									me.kc.setFrozen(false);
+									me.setScore(100, true, true);
+								});
+							}
+						break;
+						case types.DOT:
+							playerOnTop.stop();
+							numActiveDots --;
+							
+							if (playerOnTop.el.classList.contains('pill')) {
+								window.Howl && game.sounds['eat-pill'].play();
+								me.setScore(50, true);
+								me.setState('pill-eaten');
+								me.sounds['warning'].stop();
+								setMunchersEdibility(true);
+							} else {
+								window.Howl && game.sounds['eat-dot'].play();
+								me.setScore(10, true);
+							}
+							me.dotSpeed -= 250;
+							if (numActiveDots === 0) {
+								//next page.
+								me.reset(true, true);
+							}
+
+							me.sounds['heartbeat'].rate(-numActiveDots/6 + 5);
+							
+							break;
 					}
 				}
 			}
@@ -2326,37 +2614,41 @@ var game = new function () {
 	
 	me.start = function () {
 		me.lives = 3;
+		me.level = 0;
 		me.setScore(0)
-		me.reincarnate();
+		me.reincarnate(true);
 	}
 	
-	me.reincarnate = function () {
+	me.reincarnate = function (doPlaySong) {
 		maze.clear();
 		demo.stop();
-		showIntro(initLevel);
+		showIntro(initLevel, doPlaySong);
 	}
 	
-	function showIntro(callback) {
+	function showIntro(callback, doPlaySong) {
 		overlayEl.className = '';
+		// play theme song
+
 		demo.showLetterByLetter(overlayEl, 'Ready Player 1', 0, 120, function () {
 			setRequestTimeout(function () {
 				overlayEl.innerHTML = '';
 				overlayEl.className = 'hidden';
-			}, 1000);
+			}, doPlaySong ? 3750 : 1000);
 		});
 
-		callback();
+		callback(doPlaySong);
 	}
 	
 	me.showGameOver = function () {
-		if (score > highScore) {
-			setHighScore(score);
-		}
-		me.setLives();
+		me.increaseLives(0);
 		overlay.className = '';
+		Speech.speak('Game over.')
 		demo.showLetterByLetter(overlayEl, 'Game Over', 0, 100, function () {
 			setRequestTimeout(function () {
 				
+				if (score > highScore) {
+					setHighScore(score);
+				}
 				game.teardown();
 				overlayEl.innerHTML = '';
 				overlayEl.className = 'hidden';
@@ -2365,8 +2657,10 @@ var game = new function () {
 		});
 	}
 	
-	function initLevel() {
-		maze.make(9, 7, 5, 5);
+	function initLevel(doPlaySong) {
+		maze.make(9, 7, 5, 5, {
+			doPlaySong
+		});
 	}
 
 	me.startLevel = function () {
@@ -2376,25 +2670,72 @@ var game = new function () {
 		createDen();
 		me.numMunchers = parseInt(document.body.dataset.numMunchers);
 		createMunchers();
-		me.setLives();
+		//createDratapiller();
+
+		// We need to set a conditional on when trees grow.
+		/* if (me.level === 1) {
+			me.forest = new Forest(1);
+		} */
+		
+		me.increaseLives(0);
 		me.dotSpeed = 3000;
 		me.setState('');
 		collisionInterval = setRequestInterval(detectCollisionsInterval, 10);
+
+		me.sounds['heartbeat'].stop();
+		me.sounds['heartbeat'].rate(3);
+		me.sounds['heartbeat'].play();
 	}
 	
 	function initSounds() {
 		me.sounds['kc-move'].loop(true);
 		me.sounds['kc-move'].pause();
 		me.sounds['kc-move'].volume(0.1);
+		me.sounds['eat-dot'].volume(0.1);
+		me.sounds['warning'].volume(0.5);
+		me.sounds['cuckoo'].volume(0.1);
+		me.sounds['tunnel1'].volume(0.5);
+		me.sounds['heartbeat'].loop(true);
+		me.sounds['heartbeat'].volume(0.1);
+
+
+		me.sounds['cuckoo'].on('end', function () {
+			//console.log('done!');
+		})
+	}
+
+	function mazeTestMode() {
+		maze.make(9, 7, 5, 5, {
+			doPlaySong: false, 
+			showImmediately: true
+		});
+		//maze.el.dataset.hasFinishedRendering = 'true';
 	}
 	
 	me.initHelper = function () {
 		window.scrollTo(0, 1);
-		bonusDisplayEl.addEventListener('animationend', bonusDisplayAnimationEnd);
-		initSounds();
-		setRequestTimeout(demo.start, 500);
-		getHighScore();
-		mobileController.init();
+		switch(mode) {
+			case "maze-test":
+				mobileController.remove();
+				overlayEl.style.display = 'none';
+				mazeTestMode();
+				break;
+			case "kc-test":
+				document.body.dataset.numMunchers="0"
+				maze.make(9, 7, 5, 5, {
+					doPlaySong: false, 
+					showImmediately: true
+				});
+				me.startLevel();
+				break;
+			default:
+				bonusDisplayEl.addEventListener('animationend', bonusDisplayAnimationEnd);
+				initSounds();
+				setRequestTimeout(demo.start, 500);
+				getHighScore();
+				Speech.speak('Insert Coin.')
+		}
+		
 	}
 	
 	me.log = console.log
